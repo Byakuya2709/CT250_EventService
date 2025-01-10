@@ -139,4 +139,6 @@ public class EventTicket {
     public void setTicketBookingTime(Date ticketBookingTime) {
         this.ticketBookingTime = ticketBookingTime;
     }
+    
+    
 }

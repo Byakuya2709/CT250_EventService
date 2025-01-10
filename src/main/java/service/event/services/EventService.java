@@ -4,14 +4,21 @@
  */
 package service.event.services;
 
+import java.text.ParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import service.event.dto.EventDTO;
 import service.event.model.Event;
-import service.event.model.EventTicket;
+import service.event.model.EventTicketCapacity;
 import service.event.repository.EventRepository;
-import service.event.repository.EventTicketRepository;
+import service.event.repository.EventTicketCapacityRepository;
+import service.event.utils.DateUtils;
 
 /**
  *
@@ -20,41 +27,63 @@ import service.event.repository.EventTicketRepository;
 @Service
 public class EventService {
 
-    public class EventTicketService {
+    @Autowired
+    EventRepository eventRepository;
+    @Autowired
+    EventTicketCapacityRepository eventTicketCapacityRepository;
 
-        @Autowired
-        EventRepository eventRepository;
-        
-        @Autowired
-        EventTicketRepository eventTicketRepository;
-        // Phương thức để đặt vé cho sự kiện
+    public Event saveEvent(EventDTO eventDTO) {
+        Event event = new Event();
 
-        public void bookTicket(Long eventId, String position, String ticketType, Date eventDate) {
-            Event event = eventRepository.findById(eventId).orElseThrow(() -> new RuntimeException("Event not found"));
+        // Gán các thuộc tính từ DTO vào entity
+        event.setEventTitle(eventDTO.getEventTitle());
+        event.setEventStartDate(DateUtils.convertStringToDate(eventDTO.getEventStartDate()));
+        event.setEventDescription(eventDTO.getEventDescription());
+        event.setEventAgeTag(eventDTO.getEventAgeTag());  // Gán chuỗi từ DTO trực tiếp vào entity
+        event.setEventEndDate(DateUtils.convertStringToDate(eventDTO.getEventEndDate()));
+        event.setEventTags(eventDTO.getEventTags());
+        event.setEventDuration(eventDTO.getEventDuration());
+        event.setEventAddress(eventDTO.getEventAddress());
+        event.setEventCapacity(eventDTO.getEventCapacity());
+        event.setEventStatus(eventDTO.getEventStatus());
+        event.setEventCompanyId(eventDTO.getEventCompanyId());
+        event.setEventListArtist(eventDTO.getEventListArtist());
 
-            // Kiểm tra trạng thái vé
-//            EventTicket ticket = eventTicketRepository.findByEventAndPosition(event, position);
-//
-//            if (ticket == null || !ticket.getTicketStatus().equals("AVAILABLE")) {
-//                throw new TicketNotAvailableException("Ticket is not available");
-//            }
-//
-//            // Cập nhật trạng thái vé và thông tin vé
-//            ticket.setTicketStatus("BOOKED");
-//            ticket.setTicketValidity("ACTIVE");
-//            ticket.setTicketDayActive(ticketType.equals("SINGLE_DAY") ? eventDate : event.getEventStartDate());
-//            eventTicketRepository.save(ticket);
-//
-//            // Thực hiện các thao tác khác (Thanh toán, v.v.)
+        // Khởi tạo eventRatingStart
+        Map<Integer, Integer> eventRatingStart = new HashMap<>();
+        eventRatingStart.put(1, 0);
+        eventRatingStart.put(2, 0);
+        eventRatingStart.put(3, 0);
+        eventRatingStart.put(4, 0);
+        eventRatingStart.put(5, 0);
+        event.setEventRatingStart(eventRatingStart);
+
+        event.setEventListImgURL(eventDTO.getEventListImgURL());
+
+        // Tính số ngày giữa eventStartDate và eventEndDate
+        Date startDate = DateUtils.convertStringToDate(eventDTO.getEventStartDate());
+        Date endDate = DateUtils.convertStringToDate(eventDTO.getEventEndDate());
+        long daysBetween = ChronoUnit.DAYS.between(startDate.toInstant(), endDate.toInstant());
+
+        if (daysBetween < 1) {
+            daysBetween = 1;
         }
-        
-        public Event saveEvent(EventDTO eventDTO){
-            Event event = new Event();
-            
-            
-            eventRepository.save(event);
-            return event;
+
+        List<EventTicketCapacity> ticketCapacities = new ArrayList<>();
+        for (int i = 1; i <= daysBetween; i++) {
+            EventTicketCapacity ticketCapacity = new EventTicketCapacity();
+            ticketCapacity.setDay(i);
+            ticketCapacity.setRemainingCapacity(eventDTO.getEventCapacity());  // Giả sử số lượng còn lại là 0
+            ticketCapacity.setEvent(event);
+            ticketCapacities.add(ticketCapacity);  // Thêm vào danh sách
         }
+
+        event.setTicketCapacities(ticketCapacities);  // Đặt danh sách ticket capacities vào event
+
+        // Lưu sự kiện vào cơ sở dữ liệu
+        eventRepository.save(event);
+
+        return event;
     }
 
 }

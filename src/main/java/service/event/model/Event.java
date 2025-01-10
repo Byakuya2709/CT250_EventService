@@ -49,7 +49,7 @@ public class Event {
     private String eventDescription;
 
     @Column(name = "event_agetag")
-    private Date eventAgeTag;
+    private String eventAgeTag;
 
     @Column(name = "event_enddate")
     private Date eventEndDate;
@@ -103,7 +103,6 @@ public class Event {
     public Event() {
     }
 
-    // Getter and Setter methods here
     public Long getEventId() {
         return eventId;
     }
@@ -114,14 +113,6 @@ public class Event {
 
     public String getEventTitle() {
         return eventTitle;
-    }
-
-    public List<EventTicketCapacity> getTicketCapacities() {
-        return ticketCapacities;
-    }
-
-    public void setTicketCapacities(List<EventTicketCapacity> ticketCapacities) {
-        this.ticketCapacities = ticketCapacities;
     }
 
     public void setEventTitle(String eventTitle) {
@@ -144,11 +135,11 @@ public class Event {
         this.eventDescription = eventDescription;
     }
 
-    public Date getEventAgeTag() {
+    public String getEventAgeTag() {
         return eventAgeTag;
     }
 
-    public void setEventAgeTag(Date eventAgeTag) {
+    public void setEventAgeTag(String eventAgeTag) {
         this.eventAgeTag = eventAgeTag;
     }
 
@@ -232,6 +223,14 @@ public class Event {
         this.eventListImgURL = eventListImgURL;
     }
 
+    public List<EventTicketCapacity> getTicketCapacities() {
+        return ticketCapacities;
+    }
+
+    public void setTicketCapacities(List<EventTicketCapacity> ticketCapacities) {
+        this.ticketCapacities = ticketCapacities;
+    }
+
     public Submission getContract() {
         return contract;
     }
@@ -247,4 +246,7 @@ public class Event {
     public void setBlogs(List<Blog> blogs) {
         this.blogs = blogs;
     }
+
+    
+    
 }
