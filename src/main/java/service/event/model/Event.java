@@ -66,6 +66,12 @@ public class Event {
     @CollectionTable(name = "event_artist_ids", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "artist_id")
     private List<String> eventListArtistId = new ArrayList<>();
+    
+    @ElementCollection
+    @CollectionTable(name = "event_image_url", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "event_image_url")
+    private List<String> eventListImgURL = new ArrayList<>();
+
 
     // Quan hệ 1 Event có 1 Contract
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

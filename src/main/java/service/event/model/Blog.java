@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -59,6 +61,11 @@ public class Blog {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
+    
+    @ElementCollection
+    @CollectionTable(name = "blog_image_url", joinColumns = @JoinColumn(name = "blog_id"))
+    @Column(name = "blog_image_url")
+    private List<String> eventListImgURL = new ArrayList<>();
 
     // Quan hệ 1 Blog có 0 hoặc nhiều Comment
     @OneToMany(mappedBy = "blog", cascade = CascadeType.ALL, orphanRemoval = true)
