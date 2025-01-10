@@ -6,7 +6,9 @@ package service.event.model;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -17,6 +19,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -40,14 +44,21 @@ public class Event {
     @Column(name = "event_startdate")
     private Date eventStartDate;
 
+    @Lob
     @Column(name = "event_description")
     private String eventDescription;
+
+    @Column(name = "event_agetag")
+    private Date eventAgeTag;
 
     @Column(name = "event_enddate")
     private Date eventEndDate;
 
     @Column(name = "event_tags")
     private String eventTags;
+
+    @Column(name = "event_duration")
+    private String eventDuration;
 
     @Column(name = "event_address")
     private String eventAddress;
@@ -61,23 +72,30 @@ public class Event {
     @Column(name = "event_company_id")
     private String eventCompanyId;
 
-    // Sử dụng ElementCollection cho danh sách ArtistId
     @ElementCollection
     @CollectionTable(name = "event_artist_ids", joinColumns = @JoinColumn(name = "event_id"))
-    @Column(name = "artist_id")
-    private List<String> eventListArtistId = new ArrayList<>();
-    
+    @MapKeyColumn(name = "artist_id")
+    @Column(name = "artist_name")
+    private Map<String, String> eventListArtist = new HashMap<>();
+
+    // Mối quan hệ ElementCollection với Map lưu trữ số lượng đánh giá cho từng sao
+    @ElementCollection
+    @CollectionTable(name = "event_rating_start", joinColumns = @JoinColumn(name = "event_id"))
+    @MapKeyColumn(name = "star_rating")  // Lưu chỉ số sao (1, 2, 3, 4, 5)
+    @Column(name = "rating_count")  // Lưu số lượng đánh giá cho mỗi sao
+    private Map<Integer, Integer> eventRatingStart = new HashMap<>();
+
     @ElementCollection
     @CollectionTable(name = "event_image_url", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "event_image_url")
     private List<String> eventListImgURL = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<EventTicketCapacity> ticketCapacities = new ArrayList<>();  // Liên kết với EventTicketCapacity
 
-
-    // Quan hệ 1 Event có 1 Contract
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Submission contract;
 
-    // Quan hệ 1 Event có nhiều Blog
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Blog> blogs = new ArrayList<>();
 
@@ -85,8 +103,7 @@ public class Event {
     public Event() {
     }
 
-    // Các getter và setter sẽ tương tự như bạn đã viết.
-
+    // Getter and Setter methods here
     public Long getEventId() {
         return eventId;
     }
@@ -97,6 +114,14 @@ public class Event {
 
     public String getEventTitle() {
         return eventTitle;
+    }
+
+    public List<EventTicketCapacity> getTicketCapacities() {
+        return ticketCapacities;
+    }
+
+    public void setTicketCapacities(List<EventTicketCapacity> ticketCapacities) {
+        this.ticketCapacities = ticketCapacities;
     }
 
     public void setEventTitle(String eventTitle) {
@@ -119,6 +144,14 @@ public class Event {
         this.eventDescription = eventDescription;
     }
 
+    public Date getEventAgeTag() {
+        return eventAgeTag;
+    }
+
+    public void setEventAgeTag(Date eventAgeTag) {
+        this.eventAgeTag = eventAgeTag;
+    }
+
     public Date getEventEndDate() {
         return eventEndDate;
     }
@@ -133,6 +166,14 @@ public class Event {
 
     public void setEventTags(String eventTags) {
         this.eventTags = eventTags;
+    }
+
+    public String getEventDuration() {
+        return eventDuration;
+    }
+
+    public void setEventDuration(String eventDuration) {
+        this.eventDuration = eventDuration;
     }
 
     public String getEventAddress() {
@@ -167,12 +208,28 @@ public class Event {
         this.eventCompanyId = eventCompanyId;
     }
 
-    public List<String> getEventListArtistId() {
-        return eventListArtistId;
+    public Map<String, String> getEventListArtist() {
+        return eventListArtist;
     }
 
-    public void setEventListArtistId(List<String> eventListArtistId) {
-        this.eventListArtistId = eventListArtistId;
+    public void setEventListArtist(Map<String, String> eventListArtist) {
+        this.eventListArtist = eventListArtist;
+    }
+
+    public Map<Integer, Integer> getEventRatingStart() {
+        return eventRatingStart;
+    }
+
+    public void setEventRatingStart(Map<Integer, Integer> eventRatingStart) {
+        this.eventRatingStart = eventRatingStart;
+    }
+
+    public List<String> getEventListImgURL() {
+        return eventListImgURL;
+    }
+
+    public void setEventListImgURL(List<String> eventListImgURL) {
+        this.eventListImgURL = eventListImgURL;
     }
 
     public Submission getContract() {

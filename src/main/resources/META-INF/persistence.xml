@@ -7,6 +7,7 @@
     <class>service.event.model.Event</class>
     <class>service.event.model.Submission</class>
     <class>service.event.model.EventTicket</class>
+    <class>service.event.model.EventTicketCapacity</class>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/mysql?zeroDateTimeBehavior=CONVERT_TO_NULL"/>
       <property name="javax.persistence.jdbc.user" value="root"/>

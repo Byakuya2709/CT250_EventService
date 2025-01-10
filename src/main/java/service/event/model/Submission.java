@@ -51,6 +51,9 @@ public class Submission {
 
     @Column(name = "sub_company_id")
     private Long subCompanyId;
+    
+     @Column(name = "sub_company_name")
+    private Long subCompanyName;
 
     // Quan hệ 1 Submission chỉ thuộc về 1 Event
     @OneToOne(fetch = FetchType.LAZY)
@@ -133,6 +136,14 @@ public class Submission {
 
     public void setEvent(Event event) {
         this.event = event;
+    }
+
+    public Long getSubCompanyName() {
+        return subCompanyName;
+    }
+
+    public void setSubCompanyName(Long subCompanyName) {
+        this.subCompanyName = subCompanyName;
     }
 }
 

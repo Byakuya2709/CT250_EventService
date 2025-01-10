@@ -13,6 +13,6 @@ import service.event.model.Event;
  * @author admin
  */
 @Repository
-public interface EventTicket extends JpaRepository<Event,Long> {
+public interface EventTicketRepository extends JpaRepository<Event,Long> {
     
 }
