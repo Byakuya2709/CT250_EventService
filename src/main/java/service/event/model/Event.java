@@ -4,6 +4,7 @@
  */
 package service.event.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -94,9 +95,11 @@ public class Event {
     private List<EventTicketCapacity> ticketCapacities = new ArrayList<>();  // Liên kết với EventTicketCapacity
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Submission contract;
-
+    
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Blog> blogs = new ArrayList<>();
 
     // Getters, Setters, Constructors

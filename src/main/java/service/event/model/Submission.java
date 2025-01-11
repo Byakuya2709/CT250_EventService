@@ -51,9 +51,9 @@ public class Submission {
 
     @Column(name = "sub_company_id")
     private Long subCompanyId;
-    
-     @Column(name = "sub_company_name")
-    private Long subCompanyName;
+
+    @Column(name = "sub_company_name")
+    private String subCompanyName;
 
     // Quan hệ 1 Submission chỉ thuộc về 1 Event
     @OneToOne(fetch = FetchType.LAZY)
@@ -65,7 +65,6 @@ public class Submission {
     }
 
     // Các getter và setter sẽ tương tự.
-
     public Long getSubmissionId() {
         return submissionId;
     }
@@ -138,12 +137,13 @@ public class Submission {
         this.event = event;
     }
 
-    public Long getSubCompanyName() {
+    public String getSubCompanyName() {
         return subCompanyName;
     }
 
-    public void setSubCompanyName(Long subCompanyName) {
+    public void setSubCompanyName(String subCompanyName) {
         this.subCompanyName = subCompanyName;
     }
-}
 
+
+}

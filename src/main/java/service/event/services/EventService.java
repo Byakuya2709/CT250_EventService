@@ -11,13 +11,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import service.event.dto.EventDTO;
+import service.event.dto.SubmissionDTO;
 import service.event.model.Event;
 import service.event.model.EventTicketCapacity;
+import service.event.model.Submission;
 import service.event.repository.EventRepository;
 import service.event.repository.EventTicketCapacityRepository;
+import service.event.repository.SubmissionRepository;
 import service.event.utils.DateUtils;
 
 /**
@@ -29,8 +33,9 @@ public class EventService {
 
     @Autowired
     EventRepository eventRepository;
-    @Autowired
-    EventTicketCapacityRepository eventTicketCapacityRepository;
+//
+//    @Autowired
+//    EventTicketCapacityRepository eventTicketCapacityRepository;
 
     public Event saveEvent(EventDTO eventDTO) {
         Event event = new Event();

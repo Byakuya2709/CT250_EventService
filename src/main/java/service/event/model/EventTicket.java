@@ -1,5 +1,6 @@
 package service.event.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Date;
 import javax.persistence.*;
 
@@ -35,6 +36,7 @@ public class EventTicket {
     // Quan hệ với Event
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
+    @JsonIgnore
     private Event event;
 
     // Constructor mặc định

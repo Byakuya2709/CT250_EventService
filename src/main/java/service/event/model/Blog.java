@@ -4,6 +4,7 @@
  */
 package service.event.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -60,6 +61,7 @@ public class Blog {
     // Quan hệ 1 Blog thuộc về 1 Event
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
+    @JsonIgnore
     private Event event;
     
     @ElementCollection
