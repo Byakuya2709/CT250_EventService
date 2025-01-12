@@ -41,4 +41,15 @@ public class EventController {
         // Xử lý lỗi khi không thể parse ngày tháng
         
     }
+    @PostMapping("/test")
+    public ResponseEntity<?> testEvent(@RequestBody EventDTO eventDTO) {
+        try {
+            System.out.println(eventDTO.getEventListArtist());
+            return ResponseHandler.resBuilder("oke", HttpStatus.CREATED,null);
+        }catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR,null);
+        }
+        // Xử lý lỗi khi không thể parse ngày tháng
+        
+    }
 }
