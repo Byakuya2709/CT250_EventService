@@ -15,16 +15,19 @@ import java.util.Date;
 public class DateUtils {
 
     // Hàm chuyển đổi String thành Date
-    public static Date convertStringToDate(String dateStr) {
-        String format = "yyyy-MM-dd'T'HH:mm:ss";
+public static Date convertStringToDate(String dateStr) {
+    // Try both formats: one with seconds and one without
+    String[] formats = {"yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm"};
+    for (String format : formats) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(format);
         try {
             return dateFormat.parse(dateStr);
         } catch (ParseException e) {
-            // Xử lý lỗi nếu chuỗi không đúng định dạng
-            e.printStackTrace();
-            // Trả về null hoặc có thể ném ra một exception theo nhu cầu
-            return null;
+            // Ignore exception and try next format
         }
     }
+    // If no format matched, return null or throw an exception as needed
+    return null;
+}
+
 }

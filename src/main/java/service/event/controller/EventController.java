@@ -4,7 +4,6 @@
  */
 package service.event.controller;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +23,11 @@ import service.event.utils.ResponseHandler;
 @RestController
 @RequestMapping("/events")
 public class EventController {
+
     @Autowired
     EventService eventService;
 
-     @PostMapping("/create")
+    @PostMapping("/create")
     public ResponseEntity<?> saveEvent(@RequestBody EventDTO eventDTO) {
         try {
             // Gọi service để lưu sự kiện
@@ -35,21 +35,23 @@ public class EventController {
 
             // Trả về response thành công với sự kiện đã lưu
             return ResponseHandler.resBuilder("Tạo event thành công", HttpStatus.CREATED, savedEvent);
-        }catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED,null);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
         }
         // Xử lý lỗi khi không thể parse ngày tháng
-        
+
     }
+
     @PostMapping("/test")
     public ResponseEntity<?> testEvent(@RequestBody EventDTO eventDTO) {
         try {
-            System.out.println(eventDTO.getEventListArtist());
-            return ResponseHandler.resBuilder("oke", HttpStatus.CREATED,null);
-        }catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR,null);
+            // Gọi service để lưu sự kiện
+            Event savedEvent = eventService.saveEvent(eventDTO);
+
+            // Trả về response thành công với sự kiện đã lưu
+            return ResponseHandler.resBuilder("Tạo event thành công", HttpStatus.CREATED, savedEvent);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
         }
-        // Xử lý lỗi khi không thể parse ngày tháng
-        
     }
 }
