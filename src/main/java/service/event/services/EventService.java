@@ -4,25 +4,23 @@
  */
 package service.event.services;
 
-import java.text.ParseException;
+
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import service.event.dto.EventDTO;
-import service.event.dto.SubmissionDTO;
 import service.event.model.Event;
 import service.event.model.EventTicketCapacity;
-import service.event.model.Submission;
 import service.event.repository.EventRepository;
-import service.event.repository.EventTicketCapacityRepository;
-import service.event.repository.SubmissionRepository;
 import service.event.utils.DateUtils;
+
 
 /**
  *
@@ -53,7 +51,7 @@ public class EventService {
         event.setEventStatus(eventDTO.getEventStatus());
         event.setEventCompanyId(eventDTO.getEventCompanyId());
         event.setEventListArtist(eventDTO.getEventListArtist());
-
+        event.setEventPrice(eventDTO.getEventPrice());
         // Khởi tạo eventRatingStart
         Map<Integer, Integer> eventRatingStart = new HashMap<>();
         eventRatingStart.put(1, 0);
@@ -90,5 +88,7 @@ public class EventService {
 
         return event;
     }
-
+    public Page<Event> getAllEvents(Pageable pageable) {
+        return eventRepository.findAll(pageable);
+    }
 }

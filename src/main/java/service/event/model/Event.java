@@ -63,7 +63,8 @@ public class Event {
 
     @Column(name = "event_address")
     private String eventAddress;
-
+    @Column(name = "event_price")
+    private Double eventPrice;
     @Column(name = "event_capacity")
     private Integer eventCapacity;
 
@@ -90,14 +91,14 @@ public class Event {
     @CollectionTable(name = "event_image_url", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "event_image_url")
     private List<String> eventListImgURL = new ArrayList<>();
-    
+
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EventTicketCapacity> ticketCapacities = new ArrayList<>();  // Liên kết với EventTicketCapacity
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private Submission contract;
-    
+
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Blog> blogs = new ArrayList<>();
@@ -250,6 +251,13 @@ public class Event {
         this.blogs = blogs;
     }
 
-    
-    
+    public Double getEventPrice() {
+        return eventPrice;
+    }
+
+    public void setEventPrice(Double eventPrice) {
+        this.eventPrice = eventPrice;
+    }
+
+   
 }

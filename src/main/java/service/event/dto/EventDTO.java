@@ -24,6 +24,8 @@ public class EventDTO {
     private String eventAgeTag;
 
     private String eventEndDate;
+    
+    private Double eventPrice;
 
     private String eventTags;
 
@@ -147,5 +149,15 @@ public class EventDTO {
     public void setEventListImgURL(List<String> eventListImgURL) {
         this.eventListImgURL = eventListImgURL;
     }
+
+    public Double getEventPrice() {
+        return eventPrice;
+    }
+
+    public void setEventPrice(Double eventPrice) {
+        this.eventPrice = eventPrice;
+    }
+
+  
 
 }

@@ -4,12 +4,18 @@
  */
 package service.event.controller;
 
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import service.event.dto.EventDTO;
 import service.event.model.Event;
@@ -54,4 +60,21 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
         }
     }
+
+    @GetMapping("/getall")
+    public ResponseEntity<?> getAllEvent(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (size > 100) {
+                size = 100; // Cap size at 100 to prevent large queries
+            }
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Event> events = eventService.getAllEvents(pageable);
+            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, events);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
+        }
+    }
+
 }
