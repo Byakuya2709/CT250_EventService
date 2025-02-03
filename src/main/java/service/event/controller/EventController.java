@@ -11,8 +11,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,7 +36,7 @@ public class EventController {
     @Autowired
     EventService eventService;
 
-    @PostMapping("/create")
+    @PostMapping("/created")
     public ResponseEntity<?> saveEvent(@RequestBody EventDTO eventDTO) {
         try {
             // Gọi service để lưu sự kiện
@@ -48,7 +51,7 @@ public class EventController {
 
     }
 
-    @PostMapping("/test")
+    @PostMapping("/create")
     public ResponseEntity<?> testEvent(@RequestBody EventDTO eventDTO) {
         try {
             // Gọi service để lưu sự kiện
@@ -73,7 +76,49 @@ public class EventController {
             Page<Event> events = eventService.getAllEvents(pageable);
             return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, events);
         } catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
+
+    @GetMapping("/{eventID}")
+    public ResponseEntity<?> getEventById(@PathVariable Long eventID) {
+        try {
+            Event event = eventService.getEventById(eventID);
+            if (event != null) {
+                return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, event);
+            } else {
+                return ResponseHandler.resBuilder("Không tìm thấy sự kiện", HttpStatus.NOT_FOUND, null);
+            }
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+//    @PutMapping("/{eventID}")
+//    public ResponseEntity<?> updateEvent(@PathVariable Long eventID, @RequestBody EventDTO eventDTO) {
+//        try {
+//            Event updatedEvent = eventService.updateEvent(eventID, eventDTO);
+//            if (updatedEvent != null) {
+//                return ResponseHandler.resBuilder("Cập nhật sự kiện thành công", HttpStatus.OK, updatedEvent);
+//            } else {
+//                return ResponseHandler.resBuilder("Không tìm thấy sự kiện để cập nhật", HttpStatus.NOT_FOUND, null);
+//            }
+//        } catch (Exception e) {
+//            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình cập nhật sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
+//        }
+//    }
+
+    @DeleteMapping("/{eventID}")
+    public ResponseEntity<?> deleteEvent(@PathVariable Long eventID) {
+        try {
+            boolean isDeleted = eventService.deleteEvent(eventID);
+            if (isDeleted) {
+                return ResponseHandler.resBuilder("Xóa sự kiện thành công", HttpStatus.OK, null);
+            } else {
+                return ResponseHandler.resBuilder("Không tìm thấy sự kiện để xóa", HttpStatus.NOT_FOUND, null);
+            }
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình xóa sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
 
