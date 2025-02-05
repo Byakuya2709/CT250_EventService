@@ -75,10 +75,9 @@ public class Event {
     private String eventCompanyId;
 
     @ElementCollection
-    @CollectionTable(name = "event_artist_ids", joinColumns = @JoinColumn(name = "event_id"))
-    @MapKeyColumn(name = "artist_id")
+    @CollectionTable(name = "event_list_artist", joinColumns = @JoinColumn(name = "event_id"))
     @Column(name = "artist_name")
-    private Map<String, String> eventListArtist = new HashMap<>();
+    private List<String> eventListArtist = new ArrayList<>();
 
     // Mối quan hệ ElementCollection với Map lưu trữ số lượng đánh giá cho từng sao
     @ElementCollection
@@ -102,6 +101,11 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Blog> blogs = new ArrayList<>();
+    
+    
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<FeedBack> feedbacks = new ArrayList<>();
 
     // Getters, Setters, Constructors
     public Event() {
@@ -203,14 +207,15 @@ public class Event {
         this.eventCompanyId = eventCompanyId;
     }
 
-    public Map<String, String> getEventListArtist() {
+    public List<String> getEventListArtist() {
         return eventListArtist;
     }
 
-    public void setEventListArtist(Map<String, String> eventListArtist) {
+    public void setEventListArtist(List<String> eventListArtist) {
         this.eventListArtist = eventListArtist;
     }
 
+  
     public Map<Integer, Integer> getEventRatingStart() {
         return eventRatingStart;
     }
@@ -259,5 +264,12 @@ public class Event {
         this.eventPrice = eventPrice;
     }
 
-   
+    public List<FeedBack> getFeedbacks() {
+        return feedbacks;
+    }
+
+    public void setFeedbacks(List<FeedBack> feedbacks) {
+        this.feedbacks = feedbacks;
+    }
+
 }

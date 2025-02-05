@@ -39,7 +39,7 @@ public class EventDTO {
 
     private String eventCompanyId;
 
-    private Map<String, String> eventListArtist;
+    private List<String> eventListArtist;
 
     private List<String> eventListImgURL;
 
@@ -134,13 +134,15 @@ public class EventDTO {
         this.eventCompanyId = eventCompanyId;
     }
 
-    public Map<String, String> getEventListArtist() {
+    public List<String> getEventListArtist() {
         return eventListArtist;
     }
 
-    public void setEventListArtist(Map<String, String> eventListArtist) {
+    public void setEventListArtist(List<String> eventListArtist) {
         this.eventListArtist = eventListArtist;
     }
+
+  
 
     public List<String> getEventListImgURL() {
         return eventListImgURL;
