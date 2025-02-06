@@ -72,11 +72,16 @@ public class EventService {
             daysBetween = 1;
         }
 
+        
         List<EventTicketCapacity> ticketCapacities = new ArrayList<>();
+        // Giả sử số lượng khách tối đa cho mỗi ngày 
+        int dailyCapacity = eventDTO.getEventCapacity();
+        
         for (int i = 1; i <= daysBetween; i++) {
             EventTicketCapacity ticketCapacity = new EventTicketCapacity();
             ticketCapacity.setDay(i);
-            ticketCapacity.setRemainingCapacity(eventDTO.getEventCapacity());  // Giả sử số lượng còn lại là 0
+            
+            ticketCapacity.setRemainingCapacity(eventDTO.getEventCapacity()); 
             ticketCapacity.setEvent(event);
             ticketCapacities.add(ticketCapacity);  // Thêm vào danh sách
         }

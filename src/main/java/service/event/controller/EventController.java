@@ -63,6 +63,7 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
         }
     }
+    
 
     @GetMapping("/getall")
     public ResponseEntity<?> getAllEvent(

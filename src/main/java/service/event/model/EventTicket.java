@@ -30,7 +30,7 @@ public class EventTicket {
 
     @Column(name = "ticket_userid")
     private String ticketUserId;
-    
+
     @Column(name = "ticket_date")
     private Date ticketDayActive; // nếu vé single day thì day active là ngày chọn mua, nếu all day thì day acitve là ngày bắt đầu sự kiện
 
@@ -51,6 +51,20 @@ public class EventTicket {
         ALL_DAYS;   // Vé cho toàn bộ sự kiệnF
     }
 
+    public enum TicketStatus {
+        PAID, // Đã thanh toán
+        UNPAID, // Chưa thanh toán
+        CANCELED    // Hủy
+        
+    }
+
+    public enum TicketValidity {
+        INACTIVE,
+        VALID,
+        //        hết hạn
+        EXPIRED
+    }
+
     // Constructor có tham số
     public EventTicket(Double ticketPrice, String ticketStatus, String ticketValidity, String ticketPosition, Event event) {
         this.ticketPrice = ticketPrice;
@@ -58,6 +72,14 @@ public class EventTicket {
         this.ticketValidity = ticketValidity;
         this.ticketPosition = ticketPosition;
         this.event = event;
+    }
+
+    public String getTicketUserId() {
+        return ticketUserId;
+    }
+
+    public void setTicketUserId(String ticketUserId) {
+        this.ticketUserId = ticketUserId;
     }
 
     // Getter và Setter
@@ -144,6 +166,5 @@ public class EventTicket {
     public void setTicketBookingTime(Date ticketBookingTime) {
         this.ticketBookingTime = ticketBookingTime;
     }
-    
-    
+
 }

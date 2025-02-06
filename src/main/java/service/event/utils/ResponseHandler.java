@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 public class ResponseHandler {
     public static ResponseEntity<Object> resBuilder(String mes, HttpStatus statusCode, Object res) {
         Map<String, Object> response = new HashMap<>();
-        response.put("message", mes);
+        response.put("message",mes);
         response.put("status", statusCode);
         response.put("data", res);
 

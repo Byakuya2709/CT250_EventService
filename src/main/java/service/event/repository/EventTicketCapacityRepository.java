@@ -4,8 +4,10 @@
  */
 package service.event.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import service.event.model.Event;
 import service.event.model.EventTicketCapacity;
 
 /**
@@ -14,5 +16,6 @@ import service.event.model.EventTicketCapacity;
  */
 @Repository
 public interface  EventTicketCapacityRepository extends JpaRepository<EventTicketCapacity,Long> {
-    
+     EventTicketCapacity findByEventAndDay(Event event, Integer day);
+     List<EventTicketCapacity> findByEvent(Event event);
 }

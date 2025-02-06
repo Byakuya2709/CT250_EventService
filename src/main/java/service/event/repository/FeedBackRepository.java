@@ -4,18 +4,15 @@
  */
 package service.event.repository;
 
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import service.event.model.Event;
-import service.event.model.EventTicket;
-import service.event.model.EventTicketCapacity;
+import service.event.model.FeedBack;
 
 /**
  *
  * @author admin
  */
 @Repository
-public interface EventTicketRepository extends JpaRepository<EventTicket,Long> {
-     
+public interface FeedBackRepository extends JpaRepository<FeedBack,Long> {
+    
 }
