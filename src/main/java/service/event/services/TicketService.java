@@ -18,6 +18,7 @@ import service.event.repository.EventRepository;
 import service.event.repository.EventTicketCapacityRepository;
 import service.event.repository.EventTicketRepository;
 import service.event.request.BookingRequest;
+import service.event.request.TicketCapacityRequest;
 
 /**
  *
@@ -37,6 +38,13 @@ public class TicketService {
 
     @Autowired
     private EventTicketCapacityRepository eventTicketTotalCapacityRepository; // Thêm repository cho tổng số vé
+
+    public EventTicketCapacity findByEventAndDay(TicketCapacityRequest request) {
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        return eventTicketCapacityRepository.findByEventAndDay(event, request.getId());
+    }
 
     public EventTicket bookTicket(BookingRequest request) throws Exception {
         // Kiểm tra xem sự kiện có tồn tại không
@@ -96,7 +104,7 @@ public class TicketService {
             if (totalCapacity == null || totalCapacity.isEmpty()) {
                 throw new CapacityExceededException("No remaining capacity for all-day tickets.");
             }
-            
+
             // Duyệt qua tất cả các ngày và kiểm tra số vé còn lại
             for (EventTicketCapacity capacityDay : totalCapacity) {
                 if (capacityDay.getRemainingCapacity() <= 0) {
@@ -121,7 +129,10 @@ public class TicketService {
         // Lưu vé vào cơ sở dữ liệu và trả về đối tượng đã lưu
         return eventTicketRepository.save(eventTicket);
     }
+    
+    public List<EventTicket> getAllTicketByEvent(Long eventId){
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+         return eventTicketRepository.findByEvent(event);
 }
-
-
-
+}

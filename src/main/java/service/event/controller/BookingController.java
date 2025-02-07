@@ -44,4 +44,5 @@ public class BookingController {
             return ResponseHandler.resBuilder(e.getMessage(), HttpStatus.NOT_FOUND, null);
         }
     }
+
 }

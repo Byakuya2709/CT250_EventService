@@ -22,7 +22,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import service.event.dto.EventDTO;
 import service.event.model.Event;
+import service.event.model.EventTicket;
 import service.event.services.EventService;
+import service.event.services.TicketService;
 import service.event.utils.ResponseHandler;
 
 /**
@@ -35,6 +37,8 @@ public class EventController {
 
     @Autowired
     EventService eventService;
+    @Autowired
+    TicketService eventTicketService;
 
     @PostMapping("/created")
     public ResponseEntity<?> saveEvent(@RequestBody EventDTO eventDTO) {
@@ -122,5 +126,20 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình xóa sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
+    @GetMapping("/tickets/{eventID}")
+    public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID) {
+        try {
+            List<EventTicket> res = eventTicketService.getAllTicketByEvent(eventID);
 
+            if (res == null || res.isEmpty()) {
+                return ResponseHandler.resBuilder("Không tìm thấy sự kiện hoặc chưa có vé nào được đặt", HttpStatus.NOT_FOUND, null);
+            }
+
+            return ResponseHandler.resBuilder("Lấy thông tin tất cả vé thành công", HttpStatus.OK, res);
+
+        } catch (Exception e) {
+            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
 }
