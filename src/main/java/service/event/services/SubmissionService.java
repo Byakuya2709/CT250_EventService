@@ -14,7 +14,6 @@ import service.event.dto.SubmissionDTO;
 import service.event.model.Event;
 import service.event.model.Submission;
 import service.event.repository.EventRepository;
-import service.event.repository.EventTicketCapacityRepository;
 import service.event.repository.SubmissionRepository;
 import service.event.utils.DateUtils;
 

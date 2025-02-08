@@ -5,6 +5,7 @@
 package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,7 +28,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 /**
- *
  * @author admin
  */
 @Entity
@@ -91,9 +91,6 @@ public class Event {
     @Column(name = "event_image_url")
     private List<String> eventListImgURL = new ArrayList<>();
 
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EventTicketCapacity> ticketCapacities = new ArrayList<>();  // Liên kết với EventTicketCapacity
-
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private Submission contract;
@@ -101,11 +98,16 @@ public class Event {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Blog> blogs = new ArrayList<>();
-    
-    
+
+
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<FeedBack> feedbacks = new ArrayList<>();
+
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<EventTicketZone> ticketZones = new ArrayList<>();
 
     // Getters, Setters, Constructors
     public Event() {
@@ -215,7 +217,7 @@ public class Event {
         this.eventListArtist = eventListArtist;
     }
 
-  
+
     public Map<Integer, Integer> getEventRatingStart() {
         return eventRatingStart;
     }
@@ -232,12 +234,12 @@ public class Event {
         this.eventListImgURL = eventListImgURL;
     }
 
-    public List<EventTicketCapacity> getTicketCapacities() {
-        return ticketCapacities;
+    public List<EventTicketZone> getTicketZones() {
+        return ticketZones;
     }
 
-    public void setTicketCapacities(List<EventTicketCapacity> ticketCapacities) {
-        this.ticketCapacities = ticketCapacities;
+    public void setTicketZones(List<EventTicketZone> ticketZones) {
+        this.ticketZones = ticketZones;
     }
 
     public Submission getContract() {

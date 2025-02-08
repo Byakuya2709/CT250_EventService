@@ -5,12 +5,11 @@
 package service.event.repository;
 
 import java.util.List;
-import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import service.event.model.Event;
 import service.event.model.EventTicket;
-import service.event.model.EventTicketCapacity;
 
 /**
  *

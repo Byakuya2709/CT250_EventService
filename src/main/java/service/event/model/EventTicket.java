@@ -42,6 +42,12 @@ public class EventTicket {
     @JsonIgnore
     private Event event;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "zone_id", nullable = false)
+    @JsonIgnore
+    private EventTicketZone ticketZone;
+
+
     // Constructor mặc định
     public EventTicket() {
     }
