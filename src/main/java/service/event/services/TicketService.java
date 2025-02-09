@@ -45,7 +45,25 @@ public class TicketService {
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
-        return eventTicketZoneRepository.findByEventAndDay(event, request.getId());
+        return eventTicketZoneRepository.findByEventAndDay(event, request.getDay());
+    }
+    public List<EventTicket> findAllTicketByEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        return eventTicketRepository.findByEvent(event);
+    }
+
+    public List<EventTicketZone> findByEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        return eventTicketZoneRepository.findByEvent(event);
+    }
+    public List<EventTicket> getAllTicketByEventAndDay(Long eventId,Integer day){
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+        return eventTicketRepository.findByEventAndTicketDay(event,day);
     }
 
     public EventTicket bookTicket(BookingRequest request) throws Exception {
@@ -94,6 +112,7 @@ public class TicketService {
         eventTicket.setTicketDuration(ticketDuration);
         eventTicket.setTicketStatus(EventTicket.TicketStatus.UNPAID.toString());
         eventTicket.setTicketValidity(EventTicket.TicketValidity.INACTIVE.toString());
+        eventTicket.setTicketDay(Integer.parseInt(request.getDay()));
         return eventTicket;
     }
 

@@ -5,12 +5,13 @@
 package service.event.dto;
 
 import com.sun.istack.NotNull;
+import service.event.model.Event;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author ADMIN
  */
 public class EventDTO {
@@ -24,7 +25,7 @@ public class EventDTO {
     private String eventAgeTag;
 
     private String eventEndDate;
-    
+
     private Double eventPrice;
 
     private String eventTags;
@@ -142,7 +143,6 @@ public class EventDTO {
         this.eventListArtist = eventListArtist;
     }
 
-  
 
     public List<String> getEventListImgURL() {
         return eventListImgURL;
@@ -160,6 +160,5 @@ public class EventDTO {
         this.eventPrice = eventPrice;
     }
 
-  
 
 }

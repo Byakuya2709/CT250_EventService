@@ -10,7 +10,7 @@ package service.event.request;
  */
 public class TicketCapacityRequest {
     Long eventId;
-    int Id;
+    int day;
 
     public Long getEventId() {
         return eventId;
@@ -20,14 +20,16 @@ public class TicketCapacityRequest {
         this.eventId = eventId;
     }
 
-    public int getId() {
-        return Id;
+    public int getDay() {
+        return day;
     }
 
-    public void setId(int Id) {
-        this.Id = Id;
+    public void setDay(int day) {
+        this.day = day;
     }
 
-    
-    
+    public TicketCapacityRequest(Long eventId, int day) {
+        this.eventId = eventId;
+        this.day = day;
+    }
 }

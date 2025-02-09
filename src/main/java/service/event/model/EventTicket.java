@@ -31,6 +31,9 @@ public class EventTicket {
     @Column(name = "ticket_userid")
     private String ticketUserId;
 
+    @Column(name="ticket_day")
+    private int ticketDay;
+
     @Column(name = "ticket_date")
     private Date ticketDayActive; // nếu vé single day thì day active là ngày chọn mua, nếu all day thì day acitve là ngày bắt đầu sự kiện
 
@@ -74,6 +77,15 @@ public class EventTicket {
         this.ticketPosition = ticketPosition;
         this.event = event;
     }
+
+    public int getTicketDay() {
+        return ticketDay;
+    }
+
+    public void setTicketDay(int ticketDay) {
+        this.ticketDay = ticketDay;
+    }
+
 
     public String getTicketUserId() {
         return ticketUserId;

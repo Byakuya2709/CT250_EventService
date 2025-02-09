@@ -109,7 +109,6 @@ public class Event {
 
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     private List<EventTicketZone> ticketZones = new ArrayList<>();
 
     // Getters, Setters, Constructors

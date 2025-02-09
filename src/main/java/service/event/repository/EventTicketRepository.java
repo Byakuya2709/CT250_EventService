@@ -18,4 +18,8 @@ import service.event.model.EventTicket;
 @Repository
 public interface EventTicketRepository extends JpaRepository<EventTicket,Long> {
         List<EventTicket> findByEvent(Event event);
+        List<EventTicket> findByEventAndTicketDay(Event event, Integer day);
+        List<EventTicket> findByEventAndTicketStatus(Event event, EventTicket.TicketStatus status);
+        List<EventTicket> findByEventAndTicketUserId(Event event, String userId);
+
 }

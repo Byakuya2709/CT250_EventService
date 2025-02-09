@@ -5,6 +5,7 @@
 package service.event.controller;
 
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,12 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 import service.event.dto.EventDTO;
 import service.event.model.Event;
 import service.event.model.EventTicket;
+import service.event.response.OneEventResponse;
 import service.event.services.EventService;
 import service.event.services.TicketService;
 import service.event.utils.ResponseHandler;
 
 /**
- *
  * @author ADMIN
  */
 @RestController
@@ -67,7 +68,7 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
         }
     }
-    
+
 
     @GetMapping("/getall")
     public ResponseEntity<?> getAllEvent(
@@ -91,7 +92,7 @@ public class EventController {
         try {
             Event event = eventService.getEventById(eventID);
             if (event != null) {
-                return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, event);
+                return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, OneEventResponse.toEventResponse(event));
             } else {
                 return ResponseHandler.resBuilder("Không tìm thấy sự kiện", HttpStatus.NOT_FOUND, null);
             }
@@ -126,13 +127,38 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình xóa sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
+
+//    @GetMapping("/tickets/{eventID}")
+//    public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID) {
+//        try {
+//            List<EventTicket> res = eventTicketService.getAllTicketByEvent(eventID);
+//
+//            if (res == null || res.isEmpty()) {
+//                return ResponseHandler.resBuilder("Không tìm thấy sự kiện hoặc chưa có vé nào được đặt", HttpStatus.OK, null);
+//            }
+//
+//            return ResponseHandler.resBuilder("Lấy thông tin tất cả vé thành công", HttpStatus.OK, res);
+//
+//        } catch (Exception e) {
+//            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+//            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+//        }
+//    }
+
     @GetMapping("/tickets/{eventID}")
-    public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID) {
+    public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID,
+                                                @RequestParam(name = "day", required = false) Integer day) {
         try {
-            List<EventTicket> res = eventTicketService.getAllTicketByEvent(eventID);
+            List<EventTicket> res;
+
+            if (day != null) {
+                res = eventTicketService.getAllTicketByEventAndDay(eventID, day);
+            } else {
+                res = eventTicketService.getAllTicketByEvent(eventID);
+            }
 
             if (res == null || res.isEmpty()) {
-                return ResponseHandler.resBuilder("Không tìm thấy sự kiện hoặc chưa có vé nào được đặt", HttpStatus.NOT_FOUND, null);
+                return ResponseHandler.resBuilder("Không tìm thấy sự kiện hoặc chưa có vé nào được đặt", HttpStatus.OK, null);
             }
 
             return ResponseHandler.resBuilder("Lấy thông tin tất cả vé thành công", HttpStatus.OK, res);
@@ -142,4 +168,25 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
+
+    @GetMapping("/tickets/{eventID}/all")
+    public ResponseEntity<?> getAllTicketByEventId(@PathVariable Long eventID) {
+        try {
+            List<EventTicket> res = eventTicketService.findAllTicketByEvent(eventID);
+
+
+            if (res == null || res.isEmpty()) {
+                return ResponseHandler.resBuilder("Không tìm thấy sự kiện hoặc chưa có vé nào được đặt", HttpStatus.OK, null);
+            }
+
+            return ResponseHandler.resBuilder("Lấy thông tin tất cả vé thành công", HttpStatus.OK, res);
+
+        } catch (Exception e) {
+            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
+
+
 }
