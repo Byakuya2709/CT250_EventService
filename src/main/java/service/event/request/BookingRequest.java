@@ -15,6 +15,7 @@ public class BookingRequest {
     String day;
     String ticketPosition;
     String ticketDuration;
+    String ticketZone;
 
     public Long getEventId() {
         return eventId;
@@ -40,7 +41,13 @@ public class BookingRequest {
         this.ticketPrice = ticketPrice;
     }
 
+    public String getTicketZone() {
+        return ticketZone;
+    }
 
+    public void setTicketZone(String ticketZone) {
+        this.ticketZone = ticketZone;
+    }
 
     public String getDay() {
         return day;

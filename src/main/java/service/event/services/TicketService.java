@@ -4,9 +4,12 @@
  */
 package service.event.services;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import service.event.exceptions.CapacityExceededException;
@@ -19,6 +22,7 @@ import service.event.repository.EventTicketRepository;
 import service.event.repository.EventTicketZoneRepository;
 import service.event.request.BookingRequest;
 import service.event.request.TicketCapacityRequest;
+import service.event.utils.DateUtils;
 
 /**
  *
@@ -37,97 +41,149 @@ public class TicketService {
     private EventRepository eventRepository;
 
 
-//    public EventTicketZone findByEventAndDay(TicketCapacityRequest request) {
-//        Event event = eventRepository.findById(request.getEventId())
-//                .orElseThrow(() -> new EventNotFoundException("Event not found"));
-//
-//        return eventTicketCapacityRepository.findByEventAndDay(event, request.getId());
-//    }
+    public List<EventTicketZone> findByEventAndDay(TicketCapacityRequest request) {
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
-//    public EventTicket bookTicket(BookingRequest request) throws Exception {
-//        // Kiểm tra xem sự kiện có tồn tại không
-//        Event event = eventRepository.findById(request.getEventId())
-//                .orElseThrow(() -> new EventNotFoundException("Event not found"));
-//
-//        // Xác định loại vé (SINGLE_DAY hoặc ALL_DAYS)
-//        EventTicket.TicketDay ticketDuration;
-//        try {
-//            ticketDuration = EventTicket.TicketDay.valueOf(request.getTicketDuration().toUpperCase());
-//        } catch (IllegalArgumentException e) {
-//            throw new IllegalArgumentException("Invalid ticket duration type: " + request.getTicketDuration());
-//        }
-//
-//        // Tạo đối tượng vé mới và gán thông tin cơ bản
-//        EventTicket eventTicket = new EventTicket();
-//        eventTicket.setEvent(event);
-//        eventTicket.setTicketUserId(request.getUserId());
-//        eventTicket.setTicketPrice(request.getTicketPrice());
-//        eventTicket.setTicketPosition(request.getTicketPosition());
-//        eventTicket.setTicketDuration(ticketDuration);
-//        eventTicket.setTicketStatus(EventTicket.TicketStatus.UNPAID.toString());
-//        eventTicket.setTicketValidity(EventTicket.TicketValidity.INACTIVE.toString());
-//
-//        // Xử lý theo từng loại vé
-//        if (ticketDuration == EventTicket.TicketDay.SINGLE_DAY) {
-//            // Với vé SINGLE_DAY, phải có thông tin về ngày
-//            if (request.getDay() == null || request.getDay().isEmpty()) {
-//                throw new IllegalArgumentException("Day must be provided for single day tickets.");
-//            }
-//
-//            int dayNumber;
-//            try {
-//                dayNumber = Integer.parseInt(request.getDay());
-//            } catch (NumberFormatException e) {
-//                throw new IllegalArgumentException("Invalid day provided: " + request.getDay());
-//            }
-//
-//            // Lấy thông tin về khả năng vé của ngày tương ứng
-//            EventTicketCapacity ticketCapacity = eventTicketCapacityRepository.findByEventAndDay(event, dayNumber);
-//            if (ticketCapacity == null || ticketCapacity.getRemainingCapacity() <= 0) {
-//                throw new CapacityExceededException("No remaining capacity for day: " + dayNumber);
-//            }
-//
-//            // Giảm số vé còn lại và cập nhật
-//            ticketCapacity.setRemainingCapacity(ticketCapacity.getRemainingCapacity() - 1);
-//            eventTicketCapacityRepository.save(ticketCapacity);
-//
-//            // Tính toán ngày active cho vé dựa vào ngày bắt đầu sự kiện
-//            Calendar calendar = Calendar.getInstance();
-//            calendar.setTime(event.getEventStartDate());
-//            calendar.add(Calendar.DAY_OF_YEAR, dayNumber - 1);
-//            eventTicket.setTicketDayActive(calendar.getTime());
-//        } else if (ticketDuration == EventTicket.TicketDay.ALL_DAYS) {
-//            // Với vé ALL_DAYS, kiểm tra tổng số vé cho sự kiện
-//            List<EventTicketCapacity> totalCapacity = eventTicketTotalCapacityRepository.findByEvent(event);
-//            if (totalCapacity == null || totalCapacity.isEmpty()) {
-//                throw new CapacityExceededException("No remaining capacity for all-day tickets.");
-//            }
-//
-//            // Duyệt qua tất cả các ngày và kiểm tra số vé còn lại
-//            for (EventTicketCapacity capacityDay : totalCapacity) {
-//                if (capacityDay.getRemainingCapacity() <= 0) {
-//                    throw new CapacityExceededException("No remaining capacity for all-day tickets.");
-//                } else {
-//                    // Giảm số vé còn lại cho từng ngày
-//                    capacityDay.setRemainingCapacity(capacityDay.getRemainingCapacity() - 1);
-//                    eventTicketCapacityRepository.save(capacityDay); // Lưu từng thay đổi cho ngày
-//                }
-//            }
-//
-//            // Ngày active mặc định là ngày bắt đầu sự kiện
-//            eventTicket.setTicketDayActive(event.getEventStartDate());
-//        } else {
-//            // Trường hợp dự phòng (nếu có loại vé khác)
-//            eventTicket.setTicketDayActive(event.getEventStartDate());
-//        }
-//
-//        // Thiết lập thời gian booking là thời điểm hiện tại
-//        eventTicket.setTicketBookingTime(new Date());
-//
-//        // Lưu vé vào cơ sở dữ liệu và trả về đối tượng đã lưu
-//        return eventTicketRepository.save(eventTicket);
-//    }
-    
+        return eventTicketZoneRepository.findByEventAndDay(event, request.getId());
+    }
+
+    public EventTicket bookTicket(BookingRequest request) throws Exception {
+        // Kiểm tra xem sự kiện có tồn tại không
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        // Xác định loại vé (SINGLE_DAY hoặc ALL_DAYS)
+        EventTicket.TicketDay ticketDuration = parseTicketDuration(request.getTicketDuration());
+
+        // Tạo vé mới và thiết lập thông tin cơ bản
+        EventTicket eventTicket = createBaseTicket(request, event, ticketDuration);
+
+        if (ticketDuration == EventTicket.TicketDay.SINGLE_DAY) {
+            processSingleDayTicket(request, event, eventTicket);
+        } else if (ticketDuration == EventTicket.TicketDay.ALL_DAYS) {
+            processAllDaysTicket(request, event, eventTicket);
+        }
+
+        // Thiết lập thời gian đặt vé
+        eventTicket.setTicketBookingTime(new Date());
+
+        // Lưu vé vào database
+        return eventTicketRepository.save(eventTicket);
+    }
+
+    /**
+     * Phương thức kiểm tra và parse ticket duration
+     */
+    private EventTicket.TicketDay parseTicketDuration(String ticketDuration) {
+        try {
+            return EventTicket.TicketDay.valueOf(ticketDuration.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid ticket duration type: " + ticketDuration);
+        }
+    }
+
+    /**
+     * Tạo đối tượng EventTicket với thông tin cơ bản
+     */
+    private EventTicket createBaseTicket(BookingRequest request, Event event, EventTicket.TicketDay ticketDuration) {
+        EventTicket eventTicket = new EventTicket();
+        eventTicket.setEvent(event);
+        eventTicket.setTicketUserId(request.getUserId());
+        eventTicket.setTicketPosition(request.getTicketPosition());
+        eventTicket.setTicketDuration(ticketDuration);
+        eventTicket.setTicketStatus(EventTicket.TicketStatus.UNPAID.toString());
+        eventTicket.setTicketValidity(EventTicket.TicketValidity.INACTIVE.toString());
+        return eventTicket;
+    }
+
+    /**
+     * Xử lý đặt vé loại SINGLE_DAY
+     */
+    private void processSingleDayTicket(BookingRequest request, Event event, EventTicket eventTicket) {
+        // Kiểm tra và parse ngày
+        int dayNumber = parseTicketDay(request.getDay());
+
+        // Lấy khu vực vé
+        EventTicketZone zone = eventTicketZoneRepository.findByEventAndDayAndZoneName(event, dayNumber, request.getTicketZone())
+                .orElseThrow(() -> new CapacityExceededException("Không tìm thấy khu vực vé phù hợp!"));
+
+        // Kiểm tra sức chứa
+        if (zone.getRemainingCapacity() <= 0) {
+            throw new CapacityExceededException("No tickets available for the selected zone.");
+        }
+
+        // Tính giá vé
+        eventTicket.setTicketPrice(request.getTicketPrice() * zone.getZoneRate());
+
+        // Giảm sức chứa
+        updateZoneCapacity(zone);
+
+        // Xác định ngày kích hoạt vé
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(event.getEventStartDate());
+        calendar.add(Calendar.DAY_OF_YEAR, dayNumber - 1);
+        eventTicket.setTicketDayActive(calendar.getTime());
+    }
+
+    /**
+     * Xử lý đặt vé loại ALL_DAYS
+     */
+    private void processAllDaysTicket(BookingRequest request, Event event, EventTicket eventTicket) {
+        List<EventTicketZone> totalCapacity = eventTicketZoneRepository.findByEvent(event);
+
+        if (totalCapacity.isEmpty()) {
+            throw new CapacityExceededException("No remaining capacity for all-day tickets.");
+        }
+
+        // Kiểm tra tất cả ngày còn vé không
+        for (EventTicketZone capacityDay : totalCapacity) {
+            if (capacityDay.getRemainingCapacity() <= 0) {
+                throw new CapacityExceededException("No remaining capacity for all-day tickets.");
+            }
+        }
+
+
+        int totalDays = event.getTotalDays(); // Giả sử phương thức này tồn tại
+
+
+
+        // Tính giá vé
+        double zoneRate = 1.0;
+        // Giảm số lượng vé
+        for (EventTicketZone capacityDay : totalCapacity) {
+            updateZoneCapacity(capacityDay);
+            if(capacityDay.getZoneName().equals(request.getTicketZone())) zoneRate = capacityDay.getZoneRate();
+        }
+        eventTicket.setTicketPrice(request.getTicketPrice() * zoneRate * totalDays);
+
+        // Ngày active mặc định là ngày bắt đầu sự kiện
+        eventTicket.setTicketDayActive(event.getEventStartDate());
+    }
+
+    /**
+     * Chuyển đổi ngày vé từ String sang Integer, kiểm tra lỗi
+     */
+    private int parseTicketDay(String day) {
+        if (day == null || day.isEmpty()) {
+            throw new IllegalArgumentException("Day must be provided for single day tickets.");
+        }
+        try {
+            return Integer.parseInt(day);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid day provided: " + day);
+        }
+    }
+
+    /**
+     * Giảm sức chứa của khu vực vé
+     */
+    private void updateZoneCapacity(EventTicketZone zone) {
+        zone.setRemainingCapacity(zone.getRemainingCapacity() - 1);
+        eventTicketZoneRepository.save(zone);
+    }
+
+
     public List<EventTicket> getAllTicketByEvent(Long eventId){
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));

@@ -29,20 +29,20 @@ public class BookingController {
     @Autowired
     private TicketService bookingService;
 
-//    @PostMapping("/ticket")
-//    public ResponseEntity<?> bookTicket(@RequestBody BookingRequest request) {
-//        try {
-//            // Gọi service để đặt vé
-//            EventTicket eventTicket = bookingService.bookTicket(request);
-//
-//            // Trả về phản hồi thành công
-//            return ResponseHandler.resBuilder("Đặt vé thành công", HttpStatus.CREATED, eventTicket);
-//        } catch (EventNotFoundException e) {
-//            // Xử lý khi không tìm thấy vé hoặc sự kiện
-//             return ResponseHandler.resBuilder(e.getMessage(), HttpStatus.NOT_FOUND, null);
-//        } catch (Exception e) {
-//            return ResponseHandler.resBuilder(e.getMessage(), HttpStatus.NOT_FOUND, null);
-//        }
-//    }
+    @PostMapping("/ticket")
+    public ResponseEntity<?> bookTicket(@RequestBody BookingRequest request) {
+        try {
+            // Gọi service để đặt vé
+            EventTicket eventTicket = bookingService.bookTicket(request);
+
+            // Trả về phản hồi thành công
+            return ResponseHandler.resBuilder("Đặt vé thành công", HttpStatus.CREATED, eventTicket);
+        } catch (EventNotFoundException e) {
+            // Xử lý khi không tìm thấy vé hoặc sự kiện
+             return ResponseHandler.resBuilder(e.getMessage(), HttpStatus.NOT_FOUND, null);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder(e.getMessage(), HttpStatus.NOT_FOUND, null);
+        }
+    }
 
 }

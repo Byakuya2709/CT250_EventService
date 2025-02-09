@@ -6,6 +6,9 @@ package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -112,7 +115,14 @@ public class Event {
     // Getters, Setters, Constructors
     public Event() {
     }
-
+    public int getTotalDays() {
+        if (eventStartDate == null || eventEndDate == null) {
+            return 0;
+        }
+        LocalDate start = eventStartDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate end = eventEndDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return (int) ChronoUnit.DAYS.between(start, end);
+    }
     public Long getEventId() {
         return eventId;
     }
