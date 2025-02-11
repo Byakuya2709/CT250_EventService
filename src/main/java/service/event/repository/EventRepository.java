@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import service.event.model.Blog;
 import service.event.model.Event;
+import service.event.model.EventSummary;
 
 /**
  *
@@ -23,5 +24,9 @@ import service.event.model.Event;
 public interface EventRepository extends JpaRepository<Event, Long> {
 
     Page<Event> findAll(Pageable pageable);
+
+    List<EventSummary> findAllByEventCompanyId(String eventCompanyId);
+  
+    Page<EventSummary> findByEventStatus(String eventStatus,Pageable pageable);
 
 }

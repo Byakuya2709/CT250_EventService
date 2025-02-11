@@ -5,6 +5,7 @@
 package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -22,7 +23,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "feedbacks")
-public class FeedBack {
+public class FeedBack  implements Serializable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

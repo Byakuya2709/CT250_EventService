@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import service.event.dto.EventDTO;
 import service.event.dto.ZoneDTO;
 import service.event.model.Event;
+import service.event.model.EventSummary;
 import service.event.model.EventTicketZone;
 import service.event.repository.EventRepository;
 import service.event.utils.DateUtils;
@@ -115,6 +116,12 @@ public class EventService {
 
     public Page<Event> getAllEvents(Pageable pageable) {
         return eventRepository.findAll(pageable);
+    }
+    public List<EventSummary> getAllEventsByCompanyId(String companyId) {
+        return eventRepository.findAllByEventCompanyId(companyId);
+    }
+    public Page<EventSummary> getAllEventSummary(String eventStatus,Pageable pageable) {
+        return eventRepository.findByEventStatus(eventStatus,pageable);
     }
     // Lấy sự kiện theo ID
     public Event getEventById(Long eventID) {

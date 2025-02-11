@@ -4,7 +4,9 @@
  */
 package service.event.controller;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import service.event.dto.EventDTO;
 import service.event.model.Event;
+import service.event.model.EventSummary;
 import service.event.model.EventTicket;
 import service.event.response.OneEventResponse;
 import service.event.services.EventService;
@@ -69,7 +72,6 @@ public class EventController {
         }
     }
 
-
     @GetMapping("/getall")
     public ResponseEntity<?> getAllEvent(
             @RequestParam(defaultValue = "0") int page,
@@ -86,7 +88,6 @@ public class EventController {
         }
     }
 
-
     @GetMapping("/{eventID}")
     public ResponseEntity<?> getEventById(@PathVariable Long eventID) {
         try {
@@ -100,6 +101,53 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
+
+    @GetMapping("/company/{companyId}")
+    public ResponseEntity<?> getEventByCompanyId(@PathVariable String companyId) {
+        try {
+            List<EventSummary> eventList = eventService.getAllEventsByCompanyId(companyId);
+
+            if (eventList.isEmpty()) {
+                return ResponseHandler.resBuilder("Không tìm thấy sự kiện", HttpStatus.NOT_FOUND, null);
+            }
+
+            return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, eventList);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder(
+                    "Lỗi xảy ra trong quá trình lấy sự kiện: " + e.getMessage().substring(0, 100),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
+        }
+    }
+
+    @GetMapping("/get-all/{eventStatus}")
+    public ResponseEntity<?> getAllEventByCompanyId(
+            @PathVariable String eventStatus,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            if (size > 100) {
+                size = 100; // Cap size at 100 to prevent large queries
+            }
+            Pageable pageable = PageRequest.of(page, size);
+            
+            Page<EventSummary> eventList = eventService.getAllEventSummary(eventStatus,pageable);
+
+            if (eventList.isEmpty()) {
+                return ResponseHandler.resBuilder("Không tìm thấy sự kiện", HttpStatus.NOT_FOUND, null);
+            }
+
+            return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, eventList);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder(
+                    "Lỗi xảy ra trong quá trình lấy sự kiện: " + e.getMessage().substring(0, 100),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
+        }
+    }
+
 //    @PutMapping("/{eventID}")
 //    public ResponseEntity<?> updateEvent(@PathVariable Long eventID, @RequestBody EventDTO eventDTO) {
 //        try {
@@ -113,7 +161,6 @@ public class EventController {
 //            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình cập nhật sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
 //        }
 //    }
-
     @DeleteMapping("/{eventID}")
     public ResponseEntity<?> deleteEvent(@PathVariable Long eventID) {
         try {
@@ -144,10 +191,9 @@ public class EventController {
 //            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
 //        }
 //    }
-
     @GetMapping("/tickets/{eventID}")
     public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID,
-                                                @RequestParam(name = "day", required = false) Integer day) {
+            @RequestParam(name = "day", required = false) Integer day) {
         try {
             List<EventTicket> res;
 
@@ -174,7 +220,6 @@ public class EventController {
         try {
             List<EventTicket> res = eventTicketService.findAllTicketByEvent(eventID);
 
-
             if (res == null || res.isEmpty()) {
                 return ResponseHandler.resBuilder("Không tìm thấy sự kiện hoặc chưa có vé nào được đặt", HttpStatus.OK, null);
             }
@@ -186,7 +231,5 @@ public class EventController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
-
-
 
 }

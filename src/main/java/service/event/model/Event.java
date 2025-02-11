@@ -5,6 +5,7 @@
 package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -35,7 +36,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "event")
-public class Event {
+public class Event implements Serializable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -109,6 +110,7 @@ public class Event {
 
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<EventTicketZone> ticketZones = new ArrayList<>();
 
     // Getters, Setters, Constructors

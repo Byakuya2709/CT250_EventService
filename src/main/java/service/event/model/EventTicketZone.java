@@ -1,6 +1,7 @@
 package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -8,7 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "event_ticket_zone")
-public class EventTicketZone {
+public class EventTicketZone  implements Serializable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

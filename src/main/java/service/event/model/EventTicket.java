@@ -1,12 +1,13 @@
 package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.*;
 
 @Entity
 @Table(name = "event_ticket")
-public class EventTicket {
+public class EventTicket  implements Serializable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

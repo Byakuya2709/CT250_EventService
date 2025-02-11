@@ -4,6 +4,7 @@
  */
 package service.event.model;
 
+import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -23,28 +24,35 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "submission")
-public class Submission {
+public class Submission implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "sub_id")
     private Long submissionId;
 
+    //tieu de
     @Column(name = "sub_subject", nullable = false)
     private String subSubject;
 
+//    ngày tạo
     @Column(name = "sub_create_date", nullable = false)
     private Date subCreateDate;
 
+    //ngay duyet
     @Column(name = "sub_finish_date")
     private Date subFinishDate;
 
+    //trang thai , pending, aproved, reject
     @Column(name = "sub_status", nullable = false)
-    private String subStatus;
+    private String subStatus;   
 
+    
+    //han chót
     @Column(name = "sub_deadline", nullable = false)
     private Date subDeadline;
 
+    //noi dung
     @Lob
     @Column(name = "sub_content", nullable = false)
     private String subContent;
