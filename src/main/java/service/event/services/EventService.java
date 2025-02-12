@@ -8,9 +8,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,10 +20,15 @@ import org.springframework.stereotype.Service;
 import service.event.dto.EventDTO;
 import service.event.dto.EventStatsDTO;
 import service.event.dto.ZoneDTO;
+import service.event.exceptions.EventNotFoundException;
+import service.event.exceptions.FailedUpdateEventEx;
 import service.event.model.Event;
 import service.event.model.EventSummary;
 import service.event.model.EventTicketZone;
 import service.event.repository.EventRepository;
+import service.event.repository.EventTicketZoneRepository;
+import service.event.request.TicketCapacityRequest;
+import service.event.request.UpdatedZoneRequest;
 import service.event.utils.DateUtils;
 
 /**
@@ -33,6 +40,8 @@ public class EventService {
 
     @Autowired
     EventRepository eventRepository;
+    @Autowired
+    EventTicketZoneRepository eventTicketZoneRepository;
 //
 //    @Autowired
 //    EventTicketCapacityRepository eventTicketCapacityRepository;
@@ -111,6 +120,61 @@ public class EventService {
         eventRepository.save(event);
 
         return event;
+    }
+
+    public List<EventTicketZone> updateZone(Long eventId, List<UpdatedZoneRequest> req) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        List<EventTicketZone> listZone = event.getTicketZones();
+
+        for (UpdatedZoneRequest updatedZone : req) {
+            for (EventTicketZone zone : listZone) {
+                if (zone.getZoneName().equals(updatedZone.getZoneName())) {
+                    // Tính toán remainingCapacity mới
+                    int capacityChange = updatedZone.getZoneCapacity() - zone.getZoneCapacity();
+                    int newRemainingCapacity = zone.getRemainingCapacity() + capacityChange;
+
+                    // Kiểm tra remainingCapacity không được nhỏ hơn 0
+                    if (newRemainingCapacity < 0) {
+                        throw new IllegalArgumentException("Remaining capacity của zone "
+                                + zone.getZoneName() + " không hợp lệ!");
+                    }
+
+                    zone.setRemainingCapacity(newRemainingCapacity);
+                    zone.setZoneRate(updatedZone.getZoneRate());
+                    zone.setZoneCapacity(updatedZone.getZoneCapacity());
+                }
+            }
+        }
+
+        // Tính tổng eventCapacity mới
+        Set<String> processedZones = new HashSet<>();
+        Integer newEventCapacity = 0;
+
+        for (EventTicketZone zone : listZone) {
+            if (!processedZones.contains(zone.getZoneName())) {
+                newEventCapacity += zone.getZoneCapacity();
+                processedZones.add(zone.getZoneName());
+            }
+        }
+
+        event.setEventCapacity(newEventCapacity);
+
+        try {
+            eventRepository.save(event);
+        } catch (Exception e) {  // Bắt lỗi chung nếu save thất bại
+            throw new FailedUpdateEventEx("Lỗi khi cập nhật sự kiện: " + e.getMessage());
+        }
+
+        return eventTicketZoneRepository.saveAll(listZone);
+    }
+
+    public List<EventTicketZone> getAllZoneByEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+        return eventTicketZoneRepository.findByEvent(event);
     }
 
     public Page<Event> getAllEvents(Pageable pageable) {

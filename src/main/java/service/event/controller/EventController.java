@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,9 +28,12 @@ import org.springframework.web.bind.annotation.RestController;
 import service.event.dto.EventDTO;
 import service.event.dto.EventStatsDTO;
 import service.event.exceptions.EventNotFoundException;
+import service.event.exceptions.FailedUpdateEventEx;
 import service.event.model.Event;
 import service.event.model.EventSummary;
 import service.event.model.EventTicket;
+import service.event.model.EventTicketZone;
+import service.event.request.UpdatedZoneRequest;
 import service.event.response.OneEventResponse;
 import service.event.services.EventService;
 import service.event.services.TicketService;
@@ -181,6 +186,22 @@ public class EventController {
         }
     }
 
+    @PatchMapping("/update-zone/{eventID}")
+    public ResponseEntity<?> updateEventZone(@PathVariable Long eventID, @RequestBody List<UpdatedZoneRequest> req) {
+        try {
+            List<EventTicketZone> res = eventService.updateZone(eventID, req);
+            return ResponseHandler.resBuilder("Cập nhật zone sự kiện thành công", HttpStatus.OK, res);
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Lỗi: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
+        } catch (FailedUpdateEventEx ex) {
+            return ResponseHandler.resBuilder("Lỗi cập nhật: " + ex.getMessage(), HttpStatus.BAD_REQUEST, null);
+        } catch (DataAccessException ex) {
+            return ResponseHandler.resBuilder("Lỗi database: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi hệ thống: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
 //    @GetMapping("/tickets/{eventID}")
 //    public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID) {
 //        try {
@@ -261,6 +282,21 @@ public class EventController {
         try {
             Double res = eventTicketService.getTotalTicketPriceByEvent(eventID);
             return ResponseHandler.resBuilder("Lấy thông tin tổng doanh thu vé của sự kiện thành công", HttpStatus.OK, res);
+
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy thông tin: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+//getAllZone
+
+    @GetMapping("/zones/{eventID}")
+    public ResponseEntity<?> getAllZoneByEvent(@PathVariable Long eventID) {
+        try {
+            List<EventTicketZone> res = eventService.getAllZoneByEvent(eventID);
+            return ResponseHandler.resBuilder("Lấy thông tin zone sự kiện thành công", HttpStatus.OK, res);
 
         } catch (EventNotFoundException e) {
             return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
