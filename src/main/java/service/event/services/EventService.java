@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import service.event.dto.EventDTO;
+import service.event.dto.EventStatsDTO;
 import service.event.dto.ZoneDTO;
 import service.event.model.Event;
 import service.event.model.EventSummary;
@@ -83,11 +84,10 @@ public class EventService {
         int economyCapacity = totalCapacity - (vipCapacity + standardCapacity); // Còn lại cho Economy
 
         List<ZoneDTO> defaultZones = List.of(
-                new ZoneDTO("VIP", 1.4, vipCapacity),       // 140% giá gốc
+                new ZoneDTO("VIP", 1.4, vipCapacity), // 140% giá gốc
                 new ZoneDTO("STANDARD", 1.0, standardCapacity), // 100% giá gốc
-                new ZoneDTO("ECONOMY", 0.8, economyCapacity)  // 80% giá gốc
+                new ZoneDTO("ECONOMY", 0.8, economyCapacity) // 80% giá gốc
         );
-
 
         // Duyệt qua từng zone mặc định và mỗi ngày của sự kiện
         for (ZoneDTO zoneDTO : defaultZones) {
@@ -113,20 +113,30 @@ public class EventService {
         return event;
     }
 
-
     public Page<Event> getAllEvents(Pageable pageable) {
         return eventRepository.findAll(pageable);
     }
+
     public List<EventSummary> getAllEventsByCompanyId(String companyId) {
         return eventRepository.findAllByEventCompanyId(companyId);
     }
-    public Page<EventSummary> getAllEventSummary(String eventStatus,Pageable pageable) {
-        return eventRepository.findByEventStatus(eventStatus,pageable);
+
+    public Page<EventSummary> getAllEventSummary(String eventStatus, Pageable pageable) {
+        return eventRepository.findByEventStatus(eventStatus, pageable);
     }
+
     // Lấy sự kiện theo ID
     public Event getEventById(Long eventID) {
         Optional<Event> event = eventRepository.findById(eventID);
         return event.orElse(null); // Trả về null nếu không tìm thấy
+    }
+
+    public Long countByEventCompanyId(String companyId) {
+        return eventRepository.countByEventCompanyId(companyId);
+    }
+
+    public List<EventStatsDTO> getEventTicketStatisticsByCompanyId(String companyId) {
+        return eventRepository.getEventTicketStatisticsByCompanyId(companyId);
     }
 
 //    // Cập nhật sự kiện

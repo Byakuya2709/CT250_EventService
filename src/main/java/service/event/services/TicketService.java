@@ -4,6 +4,8 @@
  */
 package service.event.services;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.Date;
@@ -40,13 +42,13 @@ public class TicketService {
     @Autowired
     private EventRepository eventRepository;
 
-
     public List<EventTicketZone> findByEventAndDay(TicketCapacityRequest request) {
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
         return eventTicketZoneRepository.findByEventAndDay(event, request.getDay());
     }
+
     public List<EventTicket> findAllTicketByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
@@ -60,10 +62,11 @@ public class TicketService {
 
         return eventTicketZoneRepository.findByEvent(event);
     }
-    public List<EventTicket> getAllTicketByEventAndDay(Long eventId,Integer day){
+
+    public List<EventTicket> getAllTicketByEventAndDay(Long eventId, Integer day) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-        return eventTicketRepository.findByEventAndTicketDay(event,day);
+        return eventTicketRepository.findByEventAndTicketDay(event, day);
     }
 
     public EventTicket bookTicket(BookingRequest request) throws Exception {
@@ -132,8 +135,12 @@ public class TicketService {
             throw new CapacityExceededException("No tickets available for the selected zone.");
         }
 
-        // Tính giá vé
-        eventTicket.setTicketPrice(request.getTicketPrice() * zone.getZoneRate());
+        // Tính giá vé và làm tròn
+        eventTicket.setTicketPrice(
+                BigDecimal.valueOf(request.getTicketPrice() * zone.getZoneRate())
+                        .setScale(2, RoundingMode.HALF_UP)
+                        .doubleValue()
+        );
 
         // Giảm sức chứa
         updateZoneCapacity(zone);
@@ -162,19 +169,22 @@ public class TicketService {
             }
         }
 
-
         int totalDays = event.getTotalDays(); // Giả sử phương thức này tồn tại
-
-
 
         // Tính giá vé
         double zoneRate = 1.0;
         // Giảm số lượng vé
         for (EventTicketZone capacityDay : totalCapacity) {
             updateZoneCapacity(capacityDay);
-            if(capacityDay.getZoneName().equals(request.getTicketZone())) zoneRate = capacityDay.getZoneRate();
+            if (capacityDay.getZoneName().equals(request.getTicketZone())) {
+                zoneRate = capacityDay.getZoneRate();
+            }
         }
-        eventTicket.setTicketPrice(request.getTicketPrice() * zoneRate * totalDays);
+        eventTicket.setTicketPrice(
+                BigDecimal.valueOf(request.getTicketPrice() * zoneRate * totalDays)
+                        .setScale(2, RoundingMode.HALF_UP)
+                        .doubleValue()
+        );
 
         // Ngày active mặc định là ngày bắt đầu sự kiện
         eventTicket.setTicketDayActive(event.getEventStartDate());
@@ -202,10 +212,22 @@ public class TicketService {
         eventTicketZoneRepository.save(zone);
     }
 
-
-    public List<EventTicket> getAllTicketByEvent(Long eventId){
+    public List<EventTicket> getAllTicketByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-         return eventTicketRepository.findByEvent(event);
-}
+        return eventTicketRepository.findByEvent(event);
+    }
+
+    public long countTicketsByEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+        return eventTicketRepository.countByEvent(event);
+    }
+
+    public Double getTotalTicketPriceByEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException("Event not found"));
+        Double totalPrice = eventTicketRepository.sumTicketPriceByEvent(event);
+        return totalPrice != null ? totalPrice : 0.0;
+    }
 }

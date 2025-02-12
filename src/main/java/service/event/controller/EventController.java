@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import service.event.dto.EventDTO;
+import service.event.dto.EventStatsDTO;
+import service.event.exceptions.EventNotFoundException;
 import service.event.model.Event;
 import service.event.model.EventSummary;
 import service.event.model.EventTicket;
@@ -97,6 +99,8 @@ public class EventController {
             } else {
                 return ResponseHandler.resBuilder("Không tìm thấy sự kiện", HttpStatus.NOT_FOUND, null);
             }
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
         } catch (Exception e) {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy sự kiện: " + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
@@ -131,14 +135,16 @@ public class EventController {
                 size = 100; // Cap size at 100 to prevent large queries
             }
             Pageable pageable = PageRequest.of(page, size);
-            
-            Page<EventSummary> eventList = eventService.getAllEventSummary(eventStatus,pageable);
+
+            Page<EventSummary> eventList = eventService.getAllEventSummary(eventStatus, pageable);
 
             if (eventList.isEmpty()) {
                 return ResponseHandler.resBuilder("Không tìm thấy sự kiện", HttpStatus.NOT_FOUND, null);
             }
 
             return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, eventList);
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
         } catch (Exception e) {
             return ResponseHandler.resBuilder(
                     "Lỗi xảy ra trong quá trình lấy sự kiện: " + e.getMessage().substring(0, 100),
@@ -209,6 +215,8 @@ public class EventController {
 
             return ResponseHandler.resBuilder("Lấy thông tin tất cả vé thành công", HttpStatus.OK, res);
 
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
         } catch (Exception e) {
             String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
@@ -226,9 +234,63 @@ public class EventController {
 
             return ResponseHandler.resBuilder("Lấy thông tin tất cả vé thành công", HttpStatus.OK, res);
 
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
         } catch (Exception e) {
             String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
+    @GetMapping("/tickets/{eventID}/count-quantity")
+    public ResponseEntity<?> countTicketsByEvent(@PathVariable Long eventID) {
+        try {
+            Long res = eventTicketService.countTicketsByEvent(eventID);
+            return ResponseHandler.resBuilder("Lấy thông tin tổng số vé của sự kiện thành công", HttpStatus.OK, res);
+
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy  thông tin: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
+    @GetMapping("/tickets/{eventID}/count-sumprice")
+    public ResponseEntity<?> getTotalTicketPriceByEvent(@PathVariable Long eventID) {
+        try {
+            Double res = eventTicketService.getTotalTicketPriceByEvent(eventID);
+            return ResponseHandler.resBuilder("Lấy thông tin tổng doanh thu vé của sự kiện thành công", HttpStatus.OK, res);
+
+        } catch (EventNotFoundException e) {
+            return ResponseHandler.resBuilder("Sự kiện không tồn tại: " + e.getMessage(), HttpStatus.NOT_FOUND, null);
+        } catch (Exception e) {
+            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy thông tin: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
+    @GetMapping("/{CompanyId}/count-event")
+    public ResponseEntity<?> countByEventCompanyId(@PathVariable String CompanyId) {
+        try {
+            Long res = eventService.countByEventCompanyId(CompanyId);
+            return ResponseHandler.resBuilder("Lấy thông tin tổng số sự kiện đã tổ chức của 1 công ty thành công", HttpStatus.OK, res);
+
+        } catch (Exception e) {
+            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy thông tin: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
+    @GetMapping("/{CompanyId}/statistic")
+    public ResponseEntity<?> getEventTicketStatisticsByCompanyId(@PathVariable String CompanyId) {
+        try {
+            List<EventStatsDTO> stats = eventService.getEventTicketStatisticsByCompanyId(CompanyId);
+            return ResponseHandler.resBuilder("Lấy thống kê sự kiện thành công", HttpStatus.OK, stats);
+
+        } catch (Exception e) {
+            String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy thông tin: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
 
