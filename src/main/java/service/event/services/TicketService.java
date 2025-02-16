@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import service.event.exceptions.CapacityExceededException;
+import service.event.exceptions.EntityNotFoundExceptions;
 import service.event.exceptions.EventNotFoundException;
 import service.event.model.Event;
 import service.event.model.EventTicket;
@@ -54,6 +55,10 @@ public class TicketService {
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
 
         return eventTicketRepository.findByEvent(event);
+    }
+
+    public EventTicket findById(Long ticketId) {
+        return eventTicketRepository.findById(ticketId).orElseThrow(() -> new EntityNotFoundExceptions("Ticket not found"));
     }
 
     public List<EventTicketZone> findByEvent(Long eventId) {

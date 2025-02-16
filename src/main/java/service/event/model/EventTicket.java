@@ -46,6 +46,10 @@ public class EventTicket  implements Serializable{
     @JsonIgnore
     private Event event;
 
+    @OneToOne
+    @JoinColumn(name = "transaction_id") // Liên kết đến VNPayTransaction
+    private VNPayTransaction transaction;
+
 
     // Constructor mặc định
     public EventTicket() {
@@ -181,4 +185,12 @@ public class EventTicket  implements Serializable{
         this.ticketBookingTime = ticketBookingTime;
     }
 
+
+    public VNPayTransaction getTransaction() {
+        return transaction;
+    }
+
+    public void setTransaction(VNPayTransaction transaction) {
+        this.transaction = transaction;
+    }
 }
