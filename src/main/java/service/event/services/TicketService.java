@@ -20,6 +20,7 @@ import service.event.exceptions.EventNotFoundException;
 import service.event.model.Event;
 import service.event.model.EventTicket;
 import service.event.model.EventTicketZone;
+import service.event.model.VNPayTransaction;
 import service.event.repository.EventRepository;
 import service.event.repository.EventTicketRepository;
 import service.event.repository.EventTicketZoneRepository;
@@ -61,6 +62,14 @@ public class TicketService {
         return eventTicketRepository.findById(ticketId).orElseThrow(() -> new EntityNotFoundExceptions("Ticket not found"));
     }
 
+
+    public EventTicket updatePAIDTicket(VNPayTransaction transaction){
+        EventTicket ticket = eventTicketRepository.findByTransaction(transaction)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+        ticket.setTicketStatus(EventTicket.TicketStatus.PAID.toString());
+        return eventTicketRepository.save(ticket);
+    }
+
     public List<EventTicketZone> findByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
@@ -73,6 +82,9 @@ public class TicketService {
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
         return eventTicketRepository.findByEventAndTicketDay(event, day);
     }
+
+
+
 
     public EventTicket bookTicket(BookingRequest request) throws Exception {
         // Kiểm tra xem sự kiện có tồn tại không

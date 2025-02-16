@@ -7,6 +7,8 @@ public class VNPayRequestDTO {
     private String paymentDescrption;
     private Long eventId;
 
+    private Long ticketId;
+
     public VNPayRequestDTO() {
     }
 
@@ -15,6 +17,14 @@ public class VNPayRequestDTO {
         this.receiverId = receiverId;
         this.paymentDescrption = paymentDescrption;
         this.eventId = eventId;
+    }
+
+    public Long getTicketId() {
+        return ticketId;
+    }
+
+    public void setTicketId(Long ticketId) {
+        this.ticketId = ticketId;
     }
 
     public String getUserId() {

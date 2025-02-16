@@ -11,9 +11,13 @@ import service.event.model.VNPayTransaction;
 import service.event.paymentUtils.Config;
 import service.event.repository.VNPayTransactionRepository;
 import service.event.request.VNPayRequestDTO;
+import service.event.services.TicketService;
 import service.event.services.VNPayTransactionService;
+import service.event.utils.ResponseHandler;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -28,10 +32,12 @@ public class PaymentController {
 
     @Autowired
     VNPayTransactionService vnPayTransactionService;
+    @Autowired
+    TicketService ticketService;
 
 
     @PostMapping("/process")
-    public String processPayment(@RequestParam("amount") int amount,
+    public String processPayment(@RequestParam("amount") long amount,
                                  @RequestParam(value = "bankCode", required = false) String bankCode,
                                  @RequestParam(value = "language", required = false) String locate,
                                  HttpServletRequest req) throws UnsupportedEncodingException {
@@ -105,7 +111,7 @@ public class PaymentController {
 
 
     @PostMapping("/createPayment")
-    public String createPayment(HttpServletRequest request,@RequestBody VNPayRequestDTO requestDTO,
+    public String createPayment(HttpServletRequest request, @RequestBody VNPayRequestDTO requestDTO,
                                 @RequestParam("amount") long amount) {
         try {
             //  Tạo tham số VNPay
@@ -166,7 +172,6 @@ public class PaymentController {
             String paymentUrl = Config.vnp_PayUrl + "?" + queryString + "&vnp_SecureHash=" + secureHash;
 
 
-
             // ✅ Lưu thông tin thanh toán vào Database trước khi chuyển hướng
             VNPayTransaction transaction = new VNPayTransaction();
             transaction.setVnpTxnRef(vnp_TxnRef);
@@ -177,26 +182,28 @@ public class PaymentController {
             transaction.setEventId(requestDTO.getEventId());
 
             transaction.setVnpAmount(amount);
-            vnPayTransactionService.create(transaction,requestDTO);
+
+            vnPayTransactionService.create(transaction, requestDTO);
 
 
-            return "Redirecting to: <a href=\"" + paymentUrl + "\">" + paymentUrl + "</a>";
+//            return "<a href=\"" + paymentUrl + "\">";
+            return paymentUrl;
         } catch (Exception e) {
             return "Error creating payment URL: " + e.getMessage();
         }
     }
+
     @GetMapping("/vnpay_return")
-    public Map<String, Object> vnpayReturn(@RequestParam Map<String, String> params) {
-        Map<String, Object> response = new HashMap<>(params); // Sao chép toàn bộ tham số trả về từ VNPAY
+    public void vnpayReturn(@RequestParam Map<String, String> params, HttpServletResponse response) {
+        Map<String, Object> responseData = new HashMap<>(params); // Lưu toàn bộ tham số từ VNPay
 
         String responseCode = params.get("vnp_ResponseCode");
-        response.put("status", "fail");
-        response.put("message", "Thanh toán thất bại! Mã lỗi: " + responseCode);
+        String status = "fail";
+        String message = "Thanh toán thất bại!";
 
         if ("00".equals(responseCode)) {
-            response.put("status", "success");
-            response.put("message", "Thanh toán thành công!");
-
+            status = "success";
+            message = "Thanh toán thành công!";
             try {
                 String vnp_TxnRef = params.get("vnp_TxnRef");
                 VNPayTransaction transaction = vnPayTransactionService.getTransactionByTxnRef(vnp_TxnRef);
@@ -206,7 +213,7 @@ public class PaymentController {
                 transaction.setVnpTransactionNo(params.get("vnp_TransactionNo"));
                 transaction.setVnpTmnCode(params.get("vnp_TmnCode"));
                 transaction.setVnpOrderInfo(params.get("vnp_OrderInfo"));
-                transaction.setVnpAmount(Long.parseLong(params.get("vnp_Amount")));
+                transaction.setVnpAmount(Long.parseLong(params.get("vnp_Amount")) / 100);
                 transaction.setVnpResponseCode(responseCode);
                 transaction.setVnpTransactionStatus(params.get("vnp_TransactionStatus"));
                 transaction.setVnpPayDate(params.get("vnp_PayDate"));
@@ -214,14 +221,27 @@ public class PaymentController {
                 transaction.setStatus("success");
 
                 vnPayTransactionService.saveTransaction(transaction);
+
+                ticketService.updatePAIDTicket(transaction);
+
             } catch (EntityNotFoundExceptions e) {
-                response.put("message", "Không tìm thấy giao dịch với mã: " + params.get("vnp_TxnRef"));
+                message = "Không tìm thấy giao dịch với mã: " + params.get("vnp_TxnRef");
+            } catch (Exception e) {
+                message = "Lỗi khi xử lý thanh toán! " + e.getMessage();
             }
         }
 
-
-        return response;
+        // Chuyển hướng người dùng về frontend với trạng thái thanh toán
+        try {
+            String redirectUrl = "http://localhost:3002/payment-result?"
+                    + "status=" + status
+                    + "&message=" + URLEncoder.encode(message, StandardCharsets.UTF_8);
+            response.sendRedirect(redirectUrl);
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi chuyển hướng về trang thanh toán!", e);
+        }
     }
+
 
     @GetMapping("/queryTransaction")
     public Map<String, Object> queryTransaction(@RequestParam("txnRef") String txnRef,

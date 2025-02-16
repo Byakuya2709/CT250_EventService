@@ -29,7 +29,7 @@ public class VNPayTransactionService {
     }
 
     public VNPayTransaction create(VNPayTransaction transaction, VNPayRequestDTO req){
-        EventTicket ticket = bookingService.findById(req.getEventId());
+        EventTicket ticket = bookingService.findById(req.getTicketId());
 
         if (ticket == null) {
             throw new EntityNotFoundExceptions("EventTicket không tồn tại với ID: " + req.getEventId());

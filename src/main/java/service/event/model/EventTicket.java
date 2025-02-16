@@ -48,6 +48,7 @@ public class EventTicket  implements Serializable{
 
     @OneToOne
     @JoinColumn(name = "transaction_id") // Liên kết đến VNPayTransaction
+    @JsonIgnore
     private VNPayTransaction transaction;
 
 
