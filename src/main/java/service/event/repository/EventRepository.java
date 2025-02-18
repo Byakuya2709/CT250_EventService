@@ -13,7 +13,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import service.event.dto.EventStatsDTO;
-import service.event.model.Blog;
 import service.event.model.Event;
 import service.event.model.EventSummary;
 

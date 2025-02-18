@@ -35,12 +35,11 @@ public class PaymentController {
     @Autowired
     TicketService ticketService;
 
-
     @PostMapping("/process")
     public String processPayment(@RequestParam("amount") long amount,
-                                 @RequestParam(value = "bankCode", required = false) String bankCode,
-                                 @RequestParam(value = "language", required = false) String locate,
-                                 HttpServletRequest req) throws UnsupportedEncodingException {
+            @RequestParam(value = "bankCode", required = false) String bankCode,
+            @RequestParam(value = "language", required = false) String locate,
+            HttpServletRequest req) throws UnsupportedEncodingException {
 
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
@@ -83,7 +82,7 @@ public class PaymentController {
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
-        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext(); ) {
+        for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext();) {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
             if (fieldValue != null && !fieldValue.isEmpty()) {
@@ -109,13 +108,11 @@ public class PaymentController {
         return new Gson().toJson(job);
     }
 
-
     @PostMapping("/createPayment")
     public String createPayment(HttpServletRequest request, @RequestBody VNPayRequestDTO requestDTO,
-                                @RequestParam("amount") long amount) {
+            @RequestParam("amount") long amount) {
         try {
             //  Tạo tham số VNPay
-
 
             String vnp_Version = "2.1.0";
             String vnp_Command = "pay";
@@ -171,7 +168,6 @@ public class PaymentController {
             String secureHash = Config.hmacSHA512(Config.secretKey, queryString);
             String paymentUrl = Config.vnp_PayUrl + "?" + queryString + "&vnp_SecureHash=" + secureHash;
 
-
             // ✅ Lưu thông tin thanh toán vào Database trước khi chuyển hướng
             VNPayTransaction transaction = new VNPayTransaction();
             transaction.setVnpTxnRef(vnp_TxnRef);
@@ -184,7 +180,6 @@ public class PaymentController {
             transaction.setVnpAmount(amount);
 
             vnPayTransactionService.create(transaction, requestDTO);
-
 
 //            return "<a href=\"" + paymentUrl + "\">";
             return paymentUrl;
@@ -242,10 +237,9 @@ public class PaymentController {
         }
     }
 
-
     @GetMapping("/queryTransaction")
     public Map<String, Object> queryTransaction(@RequestParam("txnRef") String txnRef,
-                                                @RequestParam("transDate") String transDate) {
+            @RequestParam("transDate") String transDate) {
         try {
             String vnp_Version = "2.1.0";
             String vnp_Command = "querydr";
@@ -357,4 +351,71 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi: " + e.getMessage());
         }
     }
+
+    @PostMapping("/refund")
+    public ResponseEntity<String> refund(HttpServletRequest req, @RequestParam String trantype,
+            @RequestParam String order_id, @RequestParam int amount, @RequestParam String trans_date,
+            @RequestParam String user) throws IOException {
+
+        // Tham số yêu cầu
+        String vnp_RequestId = Config.getRandomNumber(8); // Tạo mã yêu cầu
+        String vnp_Version = "2.1.0";
+        String vnp_Command = "refund";
+        String vnp_TmnCode = Config.vnp_TmnCode;
+        String vnp_TransactionType = trantype; // "02" hoặc "03"
+        String vnp_TxnRef = order_id; // Mã giao dịch thanh toán trước đó
+        long amountInCents = amount * 100; // Đổi sang đơn vị nhỏ nhất (cent)
+        String vnp_Amount = String.valueOf(amountInCents);
+        String vnp_OrderInfo = "Hoan tien GD OrderId:" + vnp_TxnRef;
+        String vnp_TransactionNo = ""; // Mã giao dịch ghi nhận tại VNPAY (nếu có)
+        String vnp_TransactionDate = trans_date; // Thời gian ghi nhận giao dịch
+        String vnp_CreateBy = user; // Người thực hiện hoàn tiền
+        String vnp_CreateDate = new SimpleDateFormat("yyyyMMddHHmmss").format(Calendar.getInstance().getTime());
+        String vnp_IpAddr = Config.getIpAddress(req); // Lấy IP của máy gửi yêu cầu
+
+        // Tạo các tham số JSON
+        JsonObject vnp_Params = new JsonObject();
+        vnp_Params.addProperty("vnp_RequestId", vnp_RequestId);
+        vnp_Params.addProperty("vnp_Version", vnp_Version);
+        vnp_Params.addProperty("vnp_Command", vnp_Command);
+        vnp_Params.addProperty("vnp_TmnCode", vnp_TmnCode);
+        vnp_Params.addProperty("vnp_TransactionType", vnp_TransactionType);
+        vnp_Params.addProperty("vnp_TxnRef", vnp_TxnRef);
+        vnp_Params.addProperty("vnp_Amount", vnp_Amount);
+        vnp_Params.addProperty("vnp_OrderInfo", vnp_OrderInfo);
+        vnp_Params.addProperty("vnp_TransactionDate", vnp_TransactionDate);
+        vnp_Params.addProperty("vnp_CreateBy", vnp_CreateBy);
+        vnp_Params.addProperty("vnp_CreateDate", vnp_CreateDate);
+        vnp_Params.addProperty("vnp_IpAddr", vnp_IpAddr);
+
+        // Tạo hash cho SecureHash
+        String hash_Data = String.join("|", vnp_RequestId, vnp_Version, vnp_Command, vnp_TmnCode,
+                vnp_TransactionType, vnp_TxnRef, vnp_Amount, vnp_TransactionNo, vnp_TransactionDate,
+                vnp_CreateBy, vnp_CreateDate, vnp_IpAddr, vnp_OrderInfo);
+        String vnp_SecureHash = Config.hmacSHA512(Config.secretKey, hash_Data);
+        vnp_Params.addProperty("vnp_SecureHash", vnp_SecureHash);
+
+        // Tạo URL API
+        String url = Config.vnp_ApiUrl;
+
+        // Tạo headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        // Tạo Entity để gửi yêu cầu
+        HttpEntity<String> entity = new HttpEntity<>(vnp_Params.toString(), headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        // Gửi yêu cầu POST và nhận phản hồi
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+        // Kiểm tra kết quả
+        String responseMessage = response.getBody();
+        if (responseMessage != null && responseMessage.contains("success")) {
+            return ResponseEntity.ok(responseMessage);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Refund failed");
+        }
+    }
+
 }

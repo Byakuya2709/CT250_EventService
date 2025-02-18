@@ -101,16 +101,6 @@ public class Event implements Serializable{
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Blog> blogs = new ArrayList<>();
-
-
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private List<FeedBack> feedbacks = new ArrayList<>();
-
-
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
     private List<EventTicketZone> ticketZones = new ArrayList<>();
 
     // Getters, Setters, Constructors
@@ -261,13 +251,7 @@ public class Event implements Serializable{
         this.contract = contract;
     }
 
-    public List<Blog> getBlogs() {
-        return blogs;
-    }
-
-    public void setBlogs(List<Blog> blogs) {
-        this.blogs = blogs;
-    }
+   
 
     public Double getEventPrice() {
         return eventPrice;
@@ -277,12 +261,6 @@ public class Event implements Serializable{
         this.eventPrice = eventPrice;
     }
 
-    public List<FeedBack> getFeedbacks() {
-        return feedbacks;
-    }
-
-    public void setFeedbacks(List<FeedBack> feedbacks) {
-        this.feedbacks = feedbacks;
-    }
+    
 
 }
