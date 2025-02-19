@@ -4,8 +4,12 @@
  */
 package service.event.controller;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,15 +31,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import service.event.dto.EventDTO;
 import service.event.dto.EventStatsDTO;
+import service.event.dto.SubmissionDTO;
 import service.event.exceptions.EventNotFoundException;
 import service.event.exceptions.FailedUpdateEventEx;
 import service.event.model.Event;
 import service.event.model.EventSummary;
 import service.event.model.EventTicket;
 import service.event.model.EventTicketZone;
+import service.event.model.Submission;
 import service.event.request.UpdatedZoneRequest;
 import service.event.response.OneEventResponse;
 import service.event.services.EventService;
+import service.event.services.SubmissionService;
 import service.event.services.TicketService;
 import service.event.utils.ResponseHandler;
 
@@ -50,6 +57,9 @@ public class EventController {
     EventService eventService;
     @Autowired
     TicketService eventTicketService;
+
+    @Autowired
+    SubmissionService submissionService;
 
     @PostMapping("/created")
     public ResponseEntity<?> saveEvent(@RequestBody EventDTO eventDTO) {
@@ -71,6 +81,38 @@ public class EventController {
         try {
             // Gọi service để lưu sự kiện
             Event savedEvent = eventService.saveEvent(eventDTO);
+            if (savedEvent != null) {
+
+                SubmissionDTO submissionDTO = new SubmissionDTO();
+
+                submissionDTO.setSubSubject("Tường trình đề nghị phê duyệt sự kiện");
+
+                Date now = new Date();
+                SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+                isoFormat.setTimeZone(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
+
+                String formattedDate = isoFormat.format(now);
+
+                submissionDTO.setSubCreateDate(formattedDate);
+                submissionDTO.setSubFinishDate(null);
+                submissionDTO.setSubStatus("PENDING");
+                // Cộng thêm 2 ngày
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(now);
+                calendar.add(Calendar.DAY_OF_MONTH, 2);
+                Date deadlineDate = calendar.getTime();
+
+                // Chuyển deadline thành String
+                String formattedDeadline = isoFormat.format(deadlineDate);
+
+                submissionDTO.setSubDeadline(formattedDeadline);
+                submissionDTO.setSubContent("Chúng tôi kính trình lên ban quản trị đề nghị phê duyệt sự kiện theo kế hoạch đã đề xuất. Sự kiện này bao gồm bài thuyết trình chi tiết, các công tác chuẩn bị cần thiết và các yêu cầu hỗ trợ từ ban tổ chức. Kính mong nhận được sự xem xét và phê duyệt từ quý ban.");
+                submissionDTO.setEventId(savedEvent.getEventId());
+                submissionDTO.setSubCompanyId(savedEvent.getEventCompanyId());
+                submissionDTO.setSubCompanyName(eventDTO.getEventCompanyName());
+
+                submissionService.createSubmission(submissionDTO);
+            }
 
             // Trả về response thành công với sự kiện đã lưu
             return ResponseHandler.resBuilder("Tạo event thành công", HttpStatus.CREATED, savedEvent);

@@ -4,6 +4,7 @@
  */
 package service.event.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.CascadeType;
@@ -58,7 +59,7 @@ public class Submission implements Serializable {
     private String subContent;
 
     @Column(name = "sub_company_id")
-    private Long subCompanyId;
+    private String subCompanyId;
 
     @Column(name = "sub_company_name")
     private String subCompanyName;
@@ -66,6 +67,7 @@ public class Submission implements Serializable {
     // Quan hệ 1 Submission chỉ thuộc về 1 Event
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
+    @JsonIgnore
     private Event event;
 
     // Getters, Setters, Constructors
@@ -129,13 +131,15 @@ public class Submission implements Serializable {
         this.subContent = subContent;
     }
 
-    public Long getSubCompanyId() {
+    public String getSubCompanyId() {
         return subCompanyId;
     }
 
-    public void setSubCompanyId(Long subCompanyId) {
+    public void setSubCompanyId(String subCompanyId) {
         this.subCompanyId = subCompanyId;
     }
+
+    
 
     public Event getEvent() {
         return event;

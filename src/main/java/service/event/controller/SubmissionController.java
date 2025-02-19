@@ -26,7 +26,7 @@ import service.event.utils.ResponseHandler;
  * @author ADMIN
  */
 @RestController
-@RequestMapping("/submisons")
+@RequestMapping("/submissions")
 public class SubmissionController {
 
     @Autowired

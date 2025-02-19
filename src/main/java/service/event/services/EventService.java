@@ -37,7 +37,7 @@ import service.event.utils.DateUtils;
  */
 @Service
 public class EventService {
-
+    
     @Autowired
     EventRepository eventRepository;
     @Autowired
@@ -59,7 +59,8 @@ public class EventService {
         event.setEventDuration(eventDTO.getEventDuration());
         event.setEventAddress(eventDTO.getEventAddress());
         event.setEventCapacity(eventDTO.getEventCapacity());
-        event.setEventStatus(eventDTO.getEventStatus());
+//        event.setEventStatus(eventDTO.getEventStatus());
+        event.setEventStatus("AWAITING_APPROVAL");
         event.setEventCompanyId(eventDTO.getEventCompanyId());
         event.setEventListArtist(eventDTO.getEventListArtist());
         event.setEventPrice(eventDTO.getEventPrice());
@@ -71,20 +72,20 @@ public class EventService {
         eventRatingStart.put(4, 0);
         eventRatingStart.put(5, 0);
         event.setEventRatingStart(eventRatingStart);
-
+        
         event.setEventListImgURL(eventDTO.getEventListImgURL());
 
         // Tính số ngày sự kiện diễn ra
         Date startDate = DateUtils.convertStringToDate(eventDTO.getEventStartDate());
         Date endDate = DateUtils.convertStringToDate(eventDTO.getEventEndDate());
         long daysBetween = ChronoUnit.DAYS.between(startDate.toInstant(), endDate.toInstant());
-
+        
         if (daysBetween < 1) {
             daysBetween = 1;
         }
-
+        
         List<EventTicketZone> ticketZones = new ArrayList<>();
-
+        
         int totalCapacity = eventDTO.getEventCapacity(); // Tổng số vé
 
 // Tính số vé của từng zone
@@ -102,32 +103,32 @@ public class EventService {
         for (ZoneDTO zoneDTO : defaultZones) {
             for (int i = 1; i <= daysBetween; i++) {
                 EventTicketZone ticketZone = new EventTicketZone();
-
+                
                 ticketZone.setZoneName(zoneDTO.getZoneName());
                 ticketZone.setZoneRate(zoneDTO.getZoneRate());
                 ticketZone.setZoneCapacity(zoneDTO.getZoneCapacity());
                 ticketZone.setDay(i);
                 ticketZone.setRemainingCapacity(zoneDTO.getZoneCapacity()); // Ban đầu còn đủ vé
                 ticketZones.add(ticketZone);
-
+                
                 ticketZone.setEvent(event);
             }
         }
-
+        
         event.setTicketZones(ticketZones);
 
         // Lưu sự kiện và zones
         eventRepository.save(event);
-
+        
         return event;
     }
-
+    
     public List<EventTicketZone> updateZone(Long eventId, List<UpdatedZoneRequest> req) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-
+        
         List<EventTicketZone> listZone = event.getTicketZones();
-
+        
         for (UpdatedZoneRequest updatedZone : req) {
             for (EventTicketZone zone : listZone) {
                 if (zone.getZoneName().equals(updatedZone.getZoneName())) {
@@ -140,7 +141,7 @@ public class EventService {
                         throw new IllegalArgumentException("Remaining capacity của zone "
                                 + zone.getZoneName() + " không hợp lệ!");
                     }
-
+                    
                     zone.setRemainingCapacity(newRemainingCapacity);
                     zone.setZoneRate(updatedZone.getZoneRate());
                     zone.setZoneCapacity(updatedZone.getZoneCapacity());
@@ -151,40 +152,40 @@ public class EventService {
         // Tính tổng eventCapacity mới
         Set<String> processedZones = new HashSet<>();
         Integer newEventCapacity = 0;
-
+        
         for (EventTicketZone zone : listZone) {
             if (!processedZones.contains(zone.getZoneName())) {
                 newEventCapacity += zone.getZoneCapacity();
                 processedZones.add(zone.getZoneName());
             }
         }
-
+        
         event.setEventCapacity(newEventCapacity);
-
+        
         try {
             eventRepository.save(event);
         } catch (Exception e) {  // Bắt lỗi chung nếu save thất bại
             throw new FailedUpdateEventEx("Lỗi khi cập nhật sự kiện: " + e.getMessage());
         }
-
+        
         return eventTicketZoneRepository.saveAll(listZone);
     }
-
+    
     public List<EventTicketZone> getAllZoneByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-
+        
         return eventTicketZoneRepository.findByEvent(event);
     }
-
+    
     public Page<Event> getAllEvents(Pageable pageable) {
         return eventRepository.findAll(pageable);
     }
-
+    
     public List<EventSummary> getAllEventsByCompanyId(String companyId) {
         return eventRepository.findAllByEventCompanyId(companyId);
     }
-
+    
     public Page<EventSummary> getAllEventSummary(String eventStatus, Pageable pageable) {
         return eventRepository.findByEventStatus(eventStatus, pageable);
     }
@@ -194,11 +195,11 @@ public class EventService {
         Optional<Event> event = eventRepository.findById(eventID);
         return event.orElse(null); // Trả về null nếu không tìm thấy
     }
-
+    
     public Long countByEventCompanyId(String companyId) {
         return eventRepository.countByEventCompanyId(companyId);
     }
-
+    
     public List<EventStatsDTO> getEventTicketStatisticsByCompanyId(String companyId) {
         return eventRepository.getEventTicketStatisticsByCompanyId(companyId);
     }
@@ -228,5 +229,5 @@ public class EventService {
             return false; // Trả về false nếu không tìm thấy sự kiện
         }
     }
-
+    
 }

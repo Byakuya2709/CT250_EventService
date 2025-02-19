@@ -26,7 +26,7 @@ public class SubmissionDTO {
 
     private String subContent; // Nội dung của submission
 
-    private Long subCompanyId; // ID của công ty liên quan
+    private String subCompanyId; // ID của công ty liên quan
 
     private String subCompanyName; // Tên công ty liên quan
 
@@ -88,13 +88,15 @@ public class SubmissionDTO {
         this.subContent = subContent;
     }
 
-    public Long getSubCompanyId() {
+    public String getSubCompanyId() {
         return subCompanyId;
     }
 
-    public void setSubCompanyId(Long subCompanyId) {
+    public void setSubCompanyId(String subCompanyId) {
         this.subCompanyId = subCompanyId;
     }
+
+
 
 
 

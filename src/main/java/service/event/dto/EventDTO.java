@@ -43,6 +43,17 @@ public class EventDTO {
     private List<String> eventListArtist;
 
     private List<String> eventListImgURL;
+    
+    
+    private String eventCompanyName;
+
+    public String getEventCompanyName() {
+        return eventCompanyName;
+    }
+
+    public void setEventCompanyName(String eventCompanyName) {
+        this.eventCompanyName = eventCompanyName;
+    }
 
     public EventDTO() {
     }
