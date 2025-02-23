@@ -108,22 +108,23 @@ public class EventController {
                 submissionDTO.setSubDeadline(formattedDeadline);
                 submissionDTO.setSubContent("Chúng tôi kính trình lên ban quản trị đề nghị phê duyệt sự kiện theo kế hoạch đã đề xuất. Sự kiện này bao gồm bài thuyết trình chi tiết, các công tác chuẩn bị cần thiết và các yêu cầu hỗ trợ từ ban tổ chức. Kính mong nhận được sự xem xét và phê duyệt từ quý ban.");
                 submissionDTO.setEventId(savedEvent.getEventId());
+                submissionDTO.setSubFormdata("0");
                 submissionDTO.setSubCompanyId(savedEvent.getEventCompanyId());
                 submissionDTO.setSubCompanyName(eventDTO.getEventCompanyName());
 
-                submissionService.createSubmission(submissionDTO);
+                submissionService.createOrUpdateSubmission(submissionDTO);
             }
 
             // Trả về response thành công với sự kiện đã lưu
             return ResponseHandler.resBuilder("Tạo event thành công", HttpStatus.CREATED, savedEvent);
         } catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage(), HttpStatus.CREATED, null);
         }
     }
 
-    @GetMapping("/getall")
+    @GetMapping("")
     public ResponseEntity<?> getAllEvent(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
             if (size > 100) {

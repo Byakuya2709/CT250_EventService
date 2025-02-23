@@ -32,6 +32,8 @@ public class SubmissionDTO {
 
     private Long eventId; // ID của sự kiện liên kết
 
+    private String subFormdata;
+
     public Long getSubmissionId() {
         return submissionId;
     }
@@ -116,5 +118,11 @@ public class SubmissionDTO {
         this.eventId = eventId;
     }
 
+    public String getSubFormdata() {
+        return subFormdata;
+    }
 
+    public void setSubFormdata(String subFormdata) {
+        this.subFormdata = subFormdata;
+    }
 }

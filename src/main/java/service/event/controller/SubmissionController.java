@@ -4,25 +4,21 @@
  */
 package service.event.controller;
 
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import service.event.dto.SubmissionDTO;
 import service.event.model.Submission;
+import service.event.response.SubmissionResponse;
 import service.event.services.EventService;
 import service.event.services.SubmissionService;
 import service.event.utils.ResponseHandler;
 
 /**
- *
  * @author ADMIN
  */
 @RestController
@@ -31,7 +27,7 @@ public class SubmissionController {
 
     @Autowired
     EventService eventService;
-    
+
     @Autowired
     SubmissionService submissionService;
 
@@ -42,12 +38,11 @@ public class SubmissionController {
             @RequestBody SubmissionDTO submissionDTO) {
         try {
             submissionDTO.setEventId(eventId); // Gán eventId vào SubmissionDTO
-            Submission createdSubmission = submissionService.createSubmission(submissionDTO);
+            Submission createdSubmission = submissionService.createOrUpdateSubmission(submissionDTO);
             return ResponseHandler.resBuilder("Tạo submission thành công", HttpStatus.CREATED, createdSubmission);
-        } catch (IllegalArgumentException e) {
-            return ResponseHandler.resBuilder("Lỗi:" + e.getMessage().substring(0, 20), HttpStatus.INTERNAL_SERVER_ERROR, null);
-        } catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi:" + e.getMessage().substring(0, 20), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+         catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi:" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
 
@@ -57,7 +52,7 @@ public class SubmissionController {
             // Lấy danh sách submissions từ service
             Submission submissions = submissionService.getSubmissionByEventId(eventId);
 
-            if (submissions==null) {
+            if (submissions == null) {
                 return ResponseHandler.resBuilder("Không tìm thấy submissions cho event này", HttpStatus.NOT_FOUND, null);
             }
 
@@ -68,6 +63,26 @@ public class SubmissionController {
             // Trả về phản hồi lỗi chung
             return ResponseHandler.resBuilder("Lỗi: " + e.getMessage().substring(0, 20), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
+    }
+
+    @GetMapping("")
+    public ResponseEntity<?> getAllSubmissions(@RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "10") int size) {
+
+        try {
+            if (size > 100) {
+                size = 100; // Cap size at 100 to prevent large queries
+            }
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Submission> res = submissionService.getAllSubmissionsWithPageAble(pageable);
+            Page<SubmissionResponse> responsePage = res.map(SubmissionResponse::new);
+
+            return ResponseHandler.resBuilder("Danh sách đơn xét duyệt", HttpStatus.OK,responsePage);
+        } catch (Exception e) {
+            // Trả về phản hồi lỗi chung
+            return ResponseHandler.resBuilder("Lỗi: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+
     }
 
     // API xóa một Submission theo submissionId
@@ -89,5 +104,41 @@ public class SubmissionController {
             return ResponseHandler.resBuilder("Lỗi: " + e.getMessage().substring(0, 20), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
+
+    @PutMapping("/{submissionId}/confirm/{status}")
+    public ResponseEntity<?> approvedSubmission(
+            @PathVariable("status") String status,
+            @PathVariable("submissionId") long submissionId) {
+        try {
+            status = status.toUpperCase(); // Chuẩn hóa status về chữ in hoa
+
+            if ("APPROVED".equals(status)) {
+                return ResponseHandler.resBuilder(
+                        "Đã phê duyệt",
+                        HttpStatus.OK,
+                        submissionService.approvedSubmission(submissionId) // Sửa lỗi chính tả
+                );
+            } else if ("REJECTED".equals(status)) {
+                return ResponseHandler.resBuilder(
+                        "Đã từ chối",
+                        HttpStatus.OK,
+                        submissionService.declinedSubmission(submissionId)
+                );
+            } else {
+                return ResponseHandler.resBuilder(
+                        "Trạng thái không hợp lệ: " + status,
+                        HttpStatus.BAD_REQUEST,
+                        null
+                );
+            }
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder(
+                    "Lỗi: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null
+            );
+        }
+    }
+
 
 }

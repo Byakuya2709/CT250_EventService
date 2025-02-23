@@ -5,6 +5,7 @@
 package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 import java.util.Date;
 import javax.persistence.CascadeType;
@@ -20,7 +21,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 /**
- *
  * @author admin
  */
 @Entity
@@ -36,7 +36,7 @@ public class Submission implements Serializable {
     @Column(name = "sub_subject", nullable = false)
     private String subSubject;
 
-//    ngày tạo
+    //    ngày tạo
     @Column(name = "sub_create_date", nullable = false)
     private Date subCreateDate;
 
@@ -46,17 +46,21 @@ public class Submission implements Serializable {
 
     //trang thai , pending, aproved, reject
     @Column(name = "sub_status", nullable = false)
-    private String subStatus;   
+    private String subStatus;
 
-    
+
     //han chót
     @Column(name = "sub_deadline", nullable = false)
     private Date subDeadline;
+
 
     //noi dung
     @Lob
     @Column(name = "sub_content", nullable = false)
     private String subContent;
+
+    @Column(name = "sub_formdata", nullable = false)
+    private String subFormdata;
 
     @Column(name = "sub_company_id")
     private String subCompanyId;
@@ -139,7 +143,6 @@ public class Submission implements Serializable {
         this.subCompanyId = subCompanyId;
     }
 
-    
 
     public Event getEvent() {
         return event;
@@ -157,5 +160,11 @@ public class Submission implements Serializable {
         this.subCompanyName = subCompanyName;
     }
 
+    public String getSubFormdata() {
+        return subFormdata;
+    }
 
+    public void setSubFormdata(String subFormdata) {
+        this.subFormdata = subFormdata;
+    }
 }
