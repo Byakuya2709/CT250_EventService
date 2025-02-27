@@ -108,7 +108,7 @@ public class PaymentController {
         return new Gson().toJson(job);
     }
 
-    @PostMapping("/createPayment")
+    @PostMapping("")
     public String createPayment(HttpServletRequest request, @RequestBody VNPayRequestDTO requestDTO,
             @RequestParam("amount") long amount) {
         try {

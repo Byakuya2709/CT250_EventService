@@ -61,22 +61,22 @@ public class EventController {
     @Autowired
     SubmissionService submissionService;
 
-    @PostMapping("/created")
-    public ResponseEntity<?> saveEvent(@RequestBody EventDTO eventDTO) {
-        try {
-            // Gọi service để lưu sự kiện
-            Event savedEvent = eventService.saveEvent(eventDTO);
+//    @PostMapping("")
+//    public ResponseEntity<?> saveEvent(@RequestBody EventDTO eventDTO) {
+//        try {
+//            // Gọi service để lưu sự kiện
+//            Event savedEvent = eventService.saveEvent(eventDTO);
+//
+//            // Trả về response thành công với sự kiện đã lưu
+//            return ResponseHandler.resBuilder("Tạo event thành công", HttpStatus.CREATED, savedEvent);
+//        } catch (Exception e) {
+//            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
+//        }
+//        // Xử lý lỗi khi không thể parse ngày tháng
+//
+//    }
 
-            // Trả về response thành công với sự kiện đã lưu
-            return ResponseHandler.resBuilder("Tạo event thành công", HttpStatus.CREATED, savedEvent);
-        } catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình tạo event" + e.getMessage().substring(0, 100), HttpStatus.CREATED, null);
-        }
-        // Xử lý lỗi khi không thể parse ngày tháng
-
-    }
-
-    @PostMapping("/create")
+    @PostMapping("")
     public ResponseEntity<?> testEvent(@RequestBody EventDTO eventDTO) {
         try {
             // Gọi service để lưu sự kiện
@@ -99,7 +99,7 @@ public class EventController {
                 // Cộng thêm 2 ngày
                 Calendar calendar = Calendar.getInstance();
                 calendar.setTime(now);
-                calendar.add(Calendar.DAY_OF_MONTH, 2);
+                calendar.add(Calendar.DAY_OF_MONTH, 5);
                 Date deadlineDate = calendar.getTime();
 
                 // Chuyển deadline thành String
@@ -173,7 +173,7 @@ public class EventController {
         }
     }
 
-    @GetMapping("/get-all/{eventStatus}")
+    @GetMapping("/status/{eventStatus}")
     public ResponseEntity<?> getAllEventByCompanyId(
             @PathVariable String eventStatus,
             @RequestParam(defaultValue = "0") int page,
@@ -229,7 +229,7 @@ public class EventController {
         }
     }
 
-    @PatchMapping("/update-zone/{eventID}")
+    @PatchMapping("/zones/{eventID}")
     public ResponseEntity<?> updateEventZone(@PathVariable Long eventID, @RequestBody List<UpdatedZoneRequest> req) {
         try {
             List<EventTicketZone> res = eventService.updateZone(eventID, req);

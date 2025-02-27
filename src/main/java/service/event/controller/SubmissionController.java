@@ -31,7 +31,7 @@ public class SubmissionController {
     @Autowired
     SubmissionService submissionService;
 
-    @PostMapping("/{eventId}/create")
+    @PostMapping("/{eventId}")
 
     public ResponseEntity<?> createSubmission(
             @PathVariable("eventId") long eventId,
@@ -86,7 +86,7 @@ public class SubmissionController {
     }
 
     // API xóa một Submission theo submissionId
-    @DeleteMapping("/{submissionId}/delete")
+    @DeleteMapping("/{submissionId}")
     public ResponseEntity<?> deleteSubmission(@PathVariable("submissionId") long submissionId) {
         try {
             // Xóa submission thông qua service
