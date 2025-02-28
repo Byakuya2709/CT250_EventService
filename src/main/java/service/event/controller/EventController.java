@@ -75,7 +75,6 @@ public class EventController {
 //        // Xử lý lỗi khi không thể parse ngày tháng
 //
 //    }
-
     @PostMapping("")
     public ResponseEntity<?> testEvent(@RequestBody EventDTO eventDTO) {
         try {
@@ -122,6 +121,20 @@ public class EventController {
         }
     }
 
+    @GetMapping("/tag")
+    public ResponseEntity<?> getEventByTag(@RequestParam String tag,@RequestParam(defaultValue = "UP_COMMING") String status) {
+        try {
+            List<Event> res = eventService.get5ByTag(tag,status);
+            if (res.isEmpty()) {
+                return ResponseHandler.resBuilder("Không tồn tạisự kiện có tag này", HttpStatus.OK, null);
+            }
+
+            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, res);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
     @GetMapping("")
     public ResponseEntity<?> getAllEvent(
             @RequestParam(defaultValue = "1") int page,
@@ -136,6 +149,11 @@ public class EventController {
         } catch (Exception e) {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
+    }
+    
+     @GetMapping("/top-rated")
+    public ResponseEntity<List<Event>> getTopRatedEvents(@RequestParam(defaultValue = "5") int limit) {
+        return ResponseEntity.ok(eventService.getTopRatedEvents(limit));
     }
 
     @GetMapping("/{eventID}")

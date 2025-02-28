@@ -29,59 +29,59 @@ import java.util.*;
 @RestController
 @RequestMapping("/payment")
 public class PaymentController {
-
+    
     @Autowired
     VNPayTransactionService vnPayTransactionService;
     @Autowired
     TicketService ticketService;
-
+    
     @PostMapping("/process")
     public String processPayment(@RequestParam("amount") long amount,
             @RequestParam(value = "bankCode", required = false) String bankCode,
             @RequestParam(value = "language", required = false) String locate,
             HttpServletRequest req) throws UnsupportedEncodingException {
-
+        
         String vnp_Version = "2.1.0";
         String vnp_Command = "pay";
         String orderType = "other";
         long vnp_Amount = amount * 100;
-
+        
         String vnp_TxnRef = Config.getRandomNumber(8);
         String vnp_IpAddr = Config.getIpAddress(req);
         String vnp_TmnCode = Config.vnp_TmnCode;
-
+        
         Map<String, String> vnp_Params = new HashMap<>();
         vnp_Params.put("vnp_Version", vnp_Version);
         vnp_Params.put("vnp_Command", vnp_Command);
         vnp_Params.put("vnp_TmnCode", vnp_TmnCode);
         vnp_Params.put("vnp_Amount", String.valueOf(vnp_Amount));
         vnp_Params.put("vnp_CurrCode", "VND");
-
+        
         if (bankCode != null && !bankCode.isEmpty()) {
             vnp_Params.put("vnp_BankCode", bankCode);
         }
         vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
         vnp_Params.put("vnp_OrderInfo", "Thanh toan don hang:" + vnp_TxnRef);
         vnp_Params.put("vnp_OrderType", orderType);
-
+        
         vnp_Params.put("vnp_Locale", (locate != null && !locate.isEmpty()) ? locate : "vn");
         vnp_Params.put("vnp_ReturnUrl", Config.vnp_ReturnUrl);
         vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
-
+        
         Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
         SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
         String vnp_CreateDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
-
+        
         cld.add(Calendar.MINUTE, 15);
         String vnp_ExpireDate = formatter.format(cld.getTime());
         vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
-
+        
         List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
         Collections.sort(fieldNames);
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
-
+        
         for (Iterator<String> itr = fieldNames.iterator(); itr.hasNext();) {
             String fieldName = itr.next();
             String fieldValue = vnp_Params.get(fieldName);
@@ -95,19 +95,19 @@ public class PaymentController {
                 }
             }
         }
-
+        
         String vnp_SecureHash = Config.hmacSHA512(Config.secretKey, hashData.toString());
         query.append("&vnp_SecureHash=").append(vnp_SecureHash);
         String paymentUrl = Config.vnp_PayUrl + "?" + query;
-
+        
         JsonObject job = new JsonObject();
         job.addProperty("code", "00");
         job.addProperty("message", "success");
         job.addProperty("data", paymentUrl);
-
+        
         return new Gson().toJson(job);
     }
-
+    
     @PostMapping("")
     public String createPayment(HttpServletRequest request, @RequestBody VNPayRequestDTO requestDTO,
             @RequestParam("amount") long amount) {
@@ -119,7 +119,7 @@ public class PaymentController {
             String vnp_TxnRef = Config.getRandomNumber(8);
             String vnp_IpAddr = Config.getIpAddress(request);
             String vnp_TmnCode = Config.vnp_TmnCode;
-
+            
             Map<String, String> vnp_Params = new HashMap<>();
             vnp_Params.put("vnp_Version", vnp_Version);
             vnp_Params.put("vnp_Command", vnp_Command);
@@ -132,12 +132,12 @@ public class PaymentController {
             vnp_Params.put("vnp_Locale", "vn");
             vnp_Params.put("vnp_ReturnUrl", Config.vnp_ReturnUrl);
             vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
-
+            
             Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
             Date date = cld.getTime();
             String vnp_CreateDate = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(date);
             vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
-
+            
             cld.add(Calendar.MINUTE, 15);
             Date expireDate = cld.getTime();
             String vnp_ExpireDate = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(expireDate);
@@ -146,7 +146,7 @@ public class PaymentController {
             // Sắp xếp param theo thứ tự key tăng dần
             List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
             Collections.sort(fieldNames);
-
+            
             StringBuilder query = new StringBuilder();
             for (String fieldName : fieldNames) {
                 String value = vnp_Params.get(fieldName);
@@ -171,14 +171,14 @@ public class PaymentController {
             // ✅ Lưu thông tin thanh toán vào Database trước khi chuyển hướng
             VNPayTransaction transaction = new VNPayTransaction();
             transaction.setVnpTxnRef(vnp_TxnRef);
-
+            transaction.setStatus("pending");
             transaction.setUserId(requestDTO.getUserId()); // Lưu userId vào DB
             transaction.setReceiverId(requestDTO.getReceiverId());
             transaction.setPaymentDescrption(requestDTO.getPaymentDescrption());
             transaction.setEventId(requestDTO.getEventId());
-
+            
             transaction.setVnpAmount(amount);
-
+            
             vnPayTransactionService.create(transaction, requestDTO);
 
 //            return "<a href=\"" + paymentUrl + "\">";
@@ -187,7 +187,7 @@ public class PaymentController {
             return "Error creating payment URL: " + e.getMessage();
         }
     }
-
+    
     @GetMapping("/vnpay_return")
     public void vnpayReturn(@RequestParam Map<String, String> params, HttpServletResponse response) {
         Map<String, Object> responseData = new HashMap<>(params); // Lưu toàn bộ tham số từ VNPay
@@ -195,7 +195,7 @@ public class PaymentController {
         String responseCode = params.get("vnp_ResponseCode");
         String status = "fail";
         String message = "Thanh toán thất bại!";
-
+        
         if ("00".equals(responseCode)) {
             status = "success";
             message = "Thanh toán thành công!";
@@ -214,11 +214,11 @@ public class PaymentController {
                 transaction.setVnpPayDate(params.get("vnp_PayDate"));
                 transaction.setVnpCardType(params.get("vnp_CardType"));
                 transaction.setStatus("success");
-
+                
                 vnPayTransactionService.saveTransaction(transaction);
-
+                
                 ticketService.updatePAIDTicket(transaction);
-
+                
             } catch (EntityNotFoundExceptions e) {
                 message = "Không tìm thấy giao dịch với mã: " + params.get("vnp_TxnRef");
             } catch (Exception e) {
@@ -228,7 +228,7 @@ public class PaymentController {
 
         // Chuyển hướng người dùng về frontend với trạng thái thanh toán
         try {
-            String redirectUrl = "http://localhost:3002/payment-result?"
+            String redirectUrl = "http://localhost:3001/user/payment-result?"
                     + "status=" + status
                     + "&message=" + URLEncoder.encode(message, StandardCharsets.UTF_8);
             response.sendRedirect(redirectUrl);
@@ -236,7 +236,7 @@ public class PaymentController {
             throw new RuntimeException("Lỗi khi chuyển hướng về trang thanh toán!", e);
         }
     }
-
+    
     @GetMapping("/queryTransaction")
     public Map<String, Object> queryTransaction(@RequestParam("txnRef") String txnRef,
             @RequestParam("transDate") String transDate) {
@@ -246,7 +246,7 @@ public class PaymentController {
             String vnp_TmnCode = Config.vnp_TmnCode;
             String vnp_IpAddr = "192.168.1.1"; // Hoặc lấy từ request
             String vnp_CreateDate = new java.text.SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-
+            
             Map<String, String> vnp_Params = new HashMap<>();
             vnp_Params.put("vnp_Version", vnp_Version);
             vnp_Params.put("vnp_Command", vnp_Command);
@@ -259,7 +259,7 @@ public class PaymentController {
             // Sắp xếp tham số theo thứ tự key
             List<String> fieldNames = new ArrayList<>(vnp_Params.keySet());
             Collections.sort(fieldNames);
-
+            
             StringBuilder query = new StringBuilder();
             for (String fieldName : fieldNames) {
                 String value = vnp_Params.get(fieldName);
@@ -298,13 +298,13 @@ public class PaymentController {
             // Chuyển phản hồi thành JSON
             Map<String, Object> jsonResponse = new HashMap<>();
             jsonResponse.put("queryResult", response.toString());
-
+            
             return jsonResponse;
         } catch (Exception e) {
             return Collections.singletonMap("error", "Failed to query transaction: " + e.getMessage());
         }
     }
-
+    
     @PostMapping("/query")
     public ResponseEntity<?> queryTransaction(@RequestParam String orderId, @RequestParam String transDate, HttpServletRequest req) {
         try {
@@ -314,13 +314,13 @@ public class PaymentController {
             String vnp_TmnCode = Config.vnp_TmnCode;
             String vnp_TxnRef = orderId;
             String vnp_OrderInfo = "Kiem tra ket qua GD OrderId: " + vnp_TxnRef;
-
+            
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
             formatter.setTimeZone(TimeZone.getTimeZone("Etc/GMT+7"));
             String vnp_CreateDate = formatter.format(new Date());
-
+            
             String vnp_IpAddr = Config.getIpAddress(req);
-
+            
             JsonObject vnp_Params = new JsonObject();
             vnp_Params.addProperty("vnp_RequestId", vnp_RequestId);
             vnp_Params.addProperty("vnp_Version", vnp_Version);
@@ -342,7 +342,7 @@ public class PaymentController {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> entity = new HttpEntity<>(vnp_Params.toString(), headers);
-
+            
             ResponseEntity<String> response = restTemplate.exchange(Config.vnp_ApiUrl, HttpMethod.POST, entity, String.class);
 
             // Trả về JSON từ VNPay
@@ -351,7 +351,7 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi: " + e.getMessage());
         }
     }
-
+    
     @PostMapping("/refund")
     public ResponseEntity<String> refund(HttpServletRequest req, @RequestParam String trantype,
             @RequestParam String order_id, @RequestParam int amount, @RequestParam String trans_date,
@@ -404,7 +404,7 @@ public class PaymentController {
 
         // Tạo Entity để gửi yêu cầu
         HttpEntity<String> entity = new HttpEntity<>(vnp_Params.toString(), headers);
-
+        
         RestTemplate restTemplate = new RestTemplate();
         // Gửi yêu cầu POST và nhận phản hồi
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
@@ -417,5 +417,5 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Refund failed");
         }
     }
-
+    
 }

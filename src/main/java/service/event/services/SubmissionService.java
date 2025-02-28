@@ -169,7 +169,7 @@ public class SubmissionService {
                 submission.setSubStatus("COMPLETED");
 
                 if (submission.getEvent() != null) {
-                    submission.getEvent().setEventStatus("APPROVED");
+                    submission.getEvent().setEventStatus("UP_COMMING");
                 }
             }
         }

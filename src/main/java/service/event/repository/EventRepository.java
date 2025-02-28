@@ -33,12 +33,26 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     long countByEventCompanyId(String eventCompanyId);
 
+    @Query(value = "SELECT * FROM event e WHERE (e.event_tags LIKE CONCAT('%|', :tag, '|%') OR e.event_tags LIKE CONCAT(:tag, '|%') OR e.event_tags LIKE CONCAT('%|', :tag) OR e.event_tags = :tag) AND e.event_status = :status LIMIT 5", nativeQuery = true)
+    List<Event> findByEventTagAndEventStatus(@Param("tag") String tag, @Param("status") String status);
+
+    @Query(value = """
+        SELECT e.*
+        FROM event e
+        LEFT JOIN event_rating_start ers ON e.event_id = ers.event_id
+        GROUP BY e.event_id
+        ORDER BY 
+            SUM(ers.star_rating * ers.rating_count) / NULLIF(SUM(ers.rating_count), 0) DESC
+        LIMIT :limit
+    """, nativeQuery = true)
+    List<Event> findTopRatedEvents(@Param("limit") int limit);
+
     @Query("SELECT COUNT(e) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId")
     long countTotalTicketsByCompanyId(@Param("companyId") String companyId);
 
     @Query("SELECT COALESCE(SUM(e.ticketPrice), 0) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId")
     Double sumTotalRevenueByCompanyId(@Param("companyId") String companyId);
-    
+
     @Query("SELECT new service.event.dto.EventStatsDTO(e.event.eventId,e.event.eventTitle,e.event.eventPrice, COUNT(e), COALESCE(SUM(e.ticketPrice), 0)) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId GROUP BY e.event.eventId")
     List<EventStatsDTO> getEventTicketStatisticsByCompanyId(@Param("companyId") String companyId);
 }

@@ -171,6 +171,15 @@ public class EventService {
         return eventTicketZoneRepository.saveAll(listZone);
     }
     
+    
+    public List<Event> get5ByTag(String tag,String status){
+        return eventRepository.findByEventTagAndEventStatus(tag,status);
+    }
+    
+    public List<Event> getTopRatedEvents(int limit) {
+        return eventRepository.findTopRatedEvents(limit);
+    }
+    
     public List<EventTicketZone> getAllZoneByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));

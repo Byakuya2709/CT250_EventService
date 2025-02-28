@@ -62,8 +62,7 @@ public class TicketService {
         return eventTicketRepository.findById(ticketId).orElseThrow(() -> new EntityNotFoundExceptions("Ticket not found"));
     }
 
-
-    public EventTicket updatePAIDTicket(VNPayTransaction transaction){
+    public EventTicket updatePAIDTicket(VNPayTransaction transaction) {
         EventTicket ticket = eventTicketRepository.findByTransaction(transaction)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
         ticket.setTicketStatus(EventTicket.TicketStatus.PAID.toString());
@@ -83,8 +82,10 @@ public class TicketService {
         return eventTicketRepository.findByEventAndTicketDay(event, day);
     }
 
+    public List<EventTicket> getAllTicketByUserId(String userId) {
 
-
+        return eventTicketRepository.findByTicketUserId(userId);
+    }
 
     public EventTicket bookTicket(BookingRequest request) throws Exception {
         // Kiểm tra xem sự kiện có tồn tại không
