@@ -35,12 +35,18 @@ public interface EventTicketRepository extends JpaRepository<EventTicket, Long> 
 
 //    @Query("SELECT e FROM EventTicket e WHERE e.ticketDate BETWEEN :startDate AND :endDate")
 //    List<EventTicket> findTicketsByDateRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
+    long count();
+
+    long countByTicketStatus(String ticketStatus);
+
+    // Tính tổng giá vé theo ticketStatus
+    @Query("SELECT COALESCE(SUM(e.ticketPrice), 0) FROM EventTicket e WHERE e.ticketStatus = :ticketStatus")
+    Double sumPriceByTicketStatus(@Param("ticketStatus") String ticketStatus);
 
     long countByEvent(Event event); // Đếm số vé của sự kiện
-    
+
     @Query("SELECT SUM(e.ticketPrice) FROM EventTicket e WHERE e.event = :event")
     Double sumTicketPriceByEvent(@Param("event") Event event); // Tổng giá vé theo sự kiện
-
 
     Optional<EventTicket> findByTransaction(VNPayTransaction transaction);
 

@@ -31,6 +31,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     long count();
 
+    long countByEventStatus(String eventStatus);
+    
     long countByEventCompanyId(String eventCompanyId);
 
     @Query(value = "SELECT * FROM event e WHERE (e.event_tags LIKE CONCAT('%|', :tag, '|%') OR e.event_tags LIKE CONCAT(:tag, '|%') OR e.event_tags LIKE CONCAT('%|', :tag) OR e.event_tags = :tag) AND e.event_status = :status LIMIT 5", nativeQuery = true)
@@ -55,4 +57,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     @Query("SELECT new service.event.dto.EventStatsDTO(e.event.eventId,e.event.eventTitle,e.event.eventPrice, COUNT(e), COALESCE(SUM(e.ticketPrice), 0)) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId GROUP BY e.event.eventId")
     List<EventStatsDTO> getEventTicketStatisticsByCompanyId(@Param("companyId") String companyId);
+    
+    
 }

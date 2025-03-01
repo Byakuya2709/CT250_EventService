@@ -26,6 +26,7 @@ import service.event.model.Event;
 import service.event.model.EventSummary;
 import service.event.model.EventTicketZone;
 import service.event.repository.EventRepository;
+import service.event.repository.EventTicketRepository;
 import service.event.repository.EventTicketZoneRepository;
 import service.event.request.TicketCapacityRequest;
 import service.event.request.UpdatedZoneRequest;
@@ -37,12 +38,15 @@ import service.event.utils.DateUtils;
  */
 @Service
 public class EventService {
-    
+
     @Autowired
     EventRepository eventRepository;
     @Autowired
     EventTicketZoneRepository eventTicketZoneRepository;
 //
+
+    @Autowired
+    EventTicketRepository eventTicketRepository;
 //    @Autowired
 //    EventTicketCapacityRepository eventTicketCapacityRepository;
 
@@ -72,20 +76,20 @@ public class EventService {
         eventRatingStart.put(4, 0);
         eventRatingStart.put(5, 0);
         event.setEventRatingStart(eventRatingStart);
-        
+
         event.setEventListImgURL(eventDTO.getEventListImgURL());
 
         // Tính số ngày sự kiện diễn ra
         Date startDate = DateUtils.convertStringToDate(eventDTO.getEventStartDate());
         Date endDate = DateUtils.convertStringToDate(eventDTO.getEventEndDate());
         long daysBetween = ChronoUnit.DAYS.between(startDate.toInstant(), endDate.toInstant());
-        
+
         if (daysBetween < 1) {
             daysBetween = 1;
         }
-        
+
         List<EventTicketZone> ticketZones = new ArrayList<>();
-        
+
         int totalCapacity = eventDTO.getEventCapacity(); // Tổng số vé
 
 // Tính số vé của từng zone
@@ -103,32 +107,32 @@ public class EventService {
         for (ZoneDTO zoneDTO : defaultZones) {
             for (int i = 1; i <= daysBetween; i++) {
                 EventTicketZone ticketZone = new EventTicketZone();
-                
+
                 ticketZone.setZoneName(zoneDTO.getZoneName());
                 ticketZone.setZoneRate(zoneDTO.getZoneRate());
                 ticketZone.setZoneCapacity(zoneDTO.getZoneCapacity());
                 ticketZone.setDay(i);
                 ticketZone.setRemainingCapacity(zoneDTO.getZoneCapacity()); // Ban đầu còn đủ vé
                 ticketZones.add(ticketZone);
-                
+
                 ticketZone.setEvent(event);
             }
         }
-        
+
         event.setTicketZones(ticketZones);
 
         // Lưu sự kiện và zones
         eventRepository.save(event);
-        
+
         return event;
     }
-    
+
     public List<EventTicketZone> updateZone(Long eventId, List<UpdatedZoneRequest> req) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-        
+
         List<EventTicketZone> listZone = event.getTicketZones();
-        
+
         for (UpdatedZoneRequest updatedZone : req) {
             for (EventTicketZone zone : listZone) {
                 if (zone.getZoneName().equals(updatedZone.getZoneName())) {
@@ -141,7 +145,7 @@ public class EventService {
                         throw new IllegalArgumentException("Remaining capacity của zone "
                                 + zone.getZoneName() + " không hợp lệ!");
                     }
-                    
+
                     zone.setRemainingCapacity(newRemainingCapacity);
                     zone.setZoneRate(updatedZone.getZoneRate());
                     zone.setZoneCapacity(updatedZone.getZoneCapacity());
@@ -152,49 +156,48 @@ public class EventService {
         // Tính tổng eventCapacity mới
         Set<String> processedZones = new HashSet<>();
         Integer newEventCapacity = 0;
-        
+
         for (EventTicketZone zone : listZone) {
             if (!processedZones.contains(zone.getZoneName())) {
                 newEventCapacity += zone.getZoneCapacity();
                 processedZones.add(zone.getZoneName());
             }
         }
-        
+
         event.setEventCapacity(newEventCapacity);
-        
+
         try {
             eventRepository.save(event);
         } catch (Exception e) {  // Bắt lỗi chung nếu save thất bại
             throw new FailedUpdateEventEx("Lỗi khi cập nhật sự kiện: " + e.getMessage());
         }
-        
+
         return eventTicketZoneRepository.saveAll(listZone);
     }
-    
-    
-    public List<Event> get5ByTag(String tag,String status){
-        return eventRepository.findByEventTagAndEventStatus(tag,status);
+
+    public List<Event> get5ByTag(String tag, String status) {
+        return eventRepository.findByEventTagAndEventStatus(tag, status);
     }
-    
+
     public List<Event> getTopRatedEvents(int limit) {
         return eventRepository.findTopRatedEvents(limit);
     }
-    
+
     public List<EventTicketZone> getAllZoneByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-        
+
         return eventTicketZoneRepository.findByEvent(event);
     }
-    
+
     public Page<Event> getAllEvents(Pageable pageable) {
         return eventRepository.findAll(pageable);
     }
-    
+
     public List<EventSummary> getAllEventsByCompanyId(String companyId) {
         return eventRepository.findAllByEventCompanyId(companyId);
     }
-    
+
     public Page<EventSummary> getAllEventSummary(String eventStatus, Pageable pageable) {
         return eventRepository.findByEventStatus(eventStatus, pageable);
     }
@@ -204,11 +207,11 @@ public class EventService {
         Optional<Event> event = eventRepository.findById(eventID);
         return event.orElse(null); // Trả về null nếu không tìm thấy
     }
-    
+
     public Long countByEventCompanyId(String companyId) {
         return eventRepository.countByEventCompanyId(companyId);
     }
-    
+
     public List<EventStatsDTO> getEventTicketStatisticsByCompanyId(String companyId) {
         return eventRepository.getEventTicketStatisticsByCompanyId(companyId);
     }
@@ -238,5 +241,48 @@ public class EventService {
             return false; // Trả về false nếu không tìm thấy sự kiện
         }
     }
-    
+
+    public Map<String, Object> reportEvent() {
+        Map<String, Object> res = new HashMap<>();
+
+        // Đếm tổng số sự kiện và số lượng theo trạng thái
+        Long countedEvent = eventRepository.count();
+        Long countedCancelled = eventRepository.countByEventStatus("CANCELLED");
+        Long countedAwaiting = eventRepository.countByEventStatus("AWAITING_APPROVAL");
+        Long countedUpcoming = eventRepository.countByEventStatus("UP_COMMING");
+
+        // Đếm tổng số vé và số lượng theo trạng thái
+        Long countTicket = eventTicketRepository.count();
+        Long countTicketUnpaid = eventTicketRepository.countByTicketStatus("UNPAID");
+        Long countTicketPaid = eventTicketRepository.countByTicketStatus("PAID");
+        Long countTicketCanceled = eventTicketRepository.countByTicketStatus("CANCELED");
+
+        // Tính tổng giá trị vé theo trạng thái
+        Double countTotalPricePaid = eventTicketRepository.sumPriceByTicketStatus("PAID");
+        Double countTotalPriceUnPaid = eventTicketRepository.sumPriceByTicketStatus("UNPAID");
+        Double countTotalPriceCanceled = eventTicketRepository.sumPriceByTicketStatus("CANCELED");
+
+        // Tính tổng doanh thu từ vé (bao gồm cả vé đã thanh toán và chưa thanh toán)
+        Double countTotalPrice = (countTotalPricePaid != null ? countTotalPricePaid : 0)
+                + (countTotalPriceUnPaid != null ? countTotalPriceUnPaid : 0);
+
+        // Thêm dữ liệu vào kết quả trả về
+        res.put("totalEvent", countedEvent);
+        res.put("cancelledEvent", countedCancelled);
+        res.put("awaitingApprovalEvent", countedAwaiting);
+        res.put("upcomingEvent", countedUpcoming);
+
+        res.put("totalTicket", countTicket);
+        res.put("unpaidTicket", countTicketUnpaid);
+        res.put("paidTicket", countTicketPaid);
+        res.put("canceledTicket", countTicketCanceled);
+
+        res.put("totalRevenuePaid", countTotalPricePaid != null ? countTotalPricePaid : 0);
+        res.put("totalRevenueUnpaid", countTotalPriceUnPaid != null ? countTotalPriceUnPaid : 0);
+        res.put("totalRevenueCanceled", countTotalPriceCanceled != null ? countTotalPriceCanceled : 0);
+        res.put("totalRevenue", countTotalPrice);
+
+        return res;
+    }
+
 }
