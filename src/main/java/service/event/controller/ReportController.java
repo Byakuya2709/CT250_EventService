@@ -9,13 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import service.event.repository.EventRepository;
 import service.event.services.EventService;
 import service.event.utils.ResponseHandler;
 
 /**
- *
  * @author admin
  */
 @RestController
@@ -23,11 +23,34 @@ import service.event.utils.ResponseHandler;
 public class ReportController {
     @Autowired
     EventService eventService;
-    
-    @GetMapping("/admin")
-    public ResponseEntity<?> reportForAccount() {
+
+    @GetMapping("/overview")
+    public ResponseEntity<?> reportForOverview() {
         try {
-            return ResponseHandler.resBuilder("Lấy báo cáo sự kiện thành công", HttpStatus.OK,eventService.reportEvent() );
+            return ResponseHandler.resBuilder("Lấy báo cáo sự kiện thành công", HttpStatus.OK, eventService.reportEvent());
+        } catch (Exception ex) {
+            return ResponseHandler.resBuilder("Có lỗi xảy ra trong hệ thống", HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        }
+    }
+//    @GetMapping("/chart")
+//    public ResponseEntity<?> reportForChart(
+//            @RequestParam int year,
+//            @RequestParam int month,
+//            @RequestParam(defaultValue = "PAID") String status
+//    ) {
+//        try {
+//            return ResponseHandler.resBuilder("Lấy báo cáo sự kiện thành công", HttpStatus.OK,eventService.getTotalPriceWithStatus(year,month,status) );
+//        } catch (Exception ex) {
+//            return ResponseHandler.resBuilder("Có lỗi xảy ra trong hệ thống", HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+//        }
+//    }
+
+    @GetMapping("/charts")
+    public ResponseEntity<?> reportForChartYear(
+            @RequestParam int year
+    ) {
+        try {
+            return ResponseHandler.resBuilder("Lấy báo cáo sự kiện thành công", HttpStatus.OK, eventService.getMonthlyTotalRevenueByStatus(year));
         } catch (Exception ex) {
             return ResponseHandler.resBuilder("Có lỗi xảy ra trong hệ thống", HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
         }

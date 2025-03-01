@@ -49,11 +49,15 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     """, nativeQuery = true)
     List<Event> findTopRatedEvents(@Param("limit") int limit);
 
-    @Query("SELECT COUNT(e) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId")
-    long countTotalTicketsByCompanyId(@Param("companyId") String companyId);
+//    @Query("SELECT COUNT(e) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId")
+//    long countTotalTicketsByCompanyId(@Param("companyId") String companyId);
+//
+//    @Query("SELECT COALESCE(SUM(e.ticketPrice), 0) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId")
+//    Double sumTotalRevenueByCompanyId(@Param("companyId") String companyId);
 
-    @Query("SELECT COALESCE(SUM(e.ticketPrice), 0) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId")
-    Double sumTotalRevenueByCompanyId(@Param("companyId") String companyId);
+
+    @Query("SELECT e.eventStatus, COUNT(e) FROM Event e GROUP BY e.eventStatus")
+    List<Object[]> countEventsByStatus();
 
     @Query("SELECT new service.event.dto.EventStatsDTO(e.event.eventId,e.event.eventTitle,e.event.eventPrice, COUNT(e), COALESCE(SUM(e.ticketPrice), 0)) FROM EventTicket e WHERE e.event.eventCompanyId = :companyId GROUP BY e.event.eventId")
     List<EventStatsDTO> getEventTicketStatisticsByCompanyId(@Param("companyId") String companyId);

@@ -248,4 +248,7 @@ public class TicketService {
         Double totalPrice = eventTicketRepository.sumTicketPriceByEvent(event);
         return totalPrice != null ? totalPrice : 0.0;
     }
+
+
+
 }

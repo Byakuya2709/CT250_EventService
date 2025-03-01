@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -245,26 +247,27 @@ public class EventService {
     public Map<String, Object> reportEvent() {
         Map<String, Object> res = new HashMap<>();
 
-        // Đếm tổng số sự kiện và số lượng theo trạng thái
-        Long countedEvent = eventRepository.count();
-        Long countedCancelled = eventRepository.countByEventStatus("CANCELLED");
-        Long countedAwaiting = eventRepository.countByEventStatus("AWAITING_APPROVAL");
-        Long countedUpcoming = eventRepository.countByEventStatus("UP_COMMING");
+        // Đếm số sự kiện theo trạng thái (GROUP BY để tối ưu)
+        List<Object[]> eventStatusResults = eventRepository.countEventsByStatus();
+        Map<String, Long> eventStatusCount = new HashMap<>();
+        eventStatusResults.forEach(result -> eventStatusCount.put((String) result[0], (Long) result[1]));
 
-        // Đếm tổng số vé và số lượng theo trạng thái
-        Long countTicket = eventTicketRepository.count();
-        Long countTicketUnpaid = eventTicketRepository.countByTicketStatus("UNPAID");
-        Long countTicketPaid = eventTicketRepository.countByTicketStatus("PAID");
-        Long countTicketCanceled = eventTicketRepository.countByTicketStatus("CANCELED");
+        // Đếm tổng số sự kiện (có thể lấy từ eventStatusCount nếu mọi trạng thái đều có ít nhất 1 event)
+        Long countedEvent = eventStatusCount.values().stream().reduce(0L, Long::sum);
 
-        // Tính tổng giá trị vé theo trạng thái
-        Double countTotalPricePaid = eventTicketRepository.sumPriceByTicketStatus("PAID");
-        Double countTotalPriceUnPaid = eventTicketRepository.sumPriceByTicketStatus("UNPAID");
-        Double countTotalPriceCanceled = eventTicketRepository.sumPriceByTicketStatus("CANCELED");
+        // Lấy từng trạng thái cụ thể
+        Long countedCancelled = eventStatusCount.getOrDefault("CANCELLED", 0L);
+        Long countedAwaiting = eventStatusCount.getOrDefault("AWAITING_APPROVAL", 0L);
+        Long countedUpcoming = eventStatusCount.getOrDefault("UP_COMING", 0L);
 
-        // Tính tổng doanh thu từ vé (bao gồm cả vé đã thanh toán và chưa thanh toán)
-        Double countTotalPrice = (countTotalPricePaid != null ? countTotalPricePaid : 0)
-                + (countTotalPriceUnPaid != null ? countTotalPriceUnPaid : 0);
+        // Đếm tổng số vé theo trạng thái
+        List<Object[]> ticketStatusResults = eventTicketRepository.countTicketsByStatus();
+        Map<String, Long> ticketStatusCount = new HashMap<>();
+        ticketStatusResults.forEach(result -> ticketStatusCount.put((String) result[0], (Long) result[1]));
+
+        Long countTicketUnpaid = ticketStatusCount.getOrDefault("UNPAID", 0L);
+        Long countTicketPaid = ticketStatusCount.getOrDefault("PAID", 0L);
+        Long countTicket = countTicketUnpaid + countTicketPaid;
 
         // Thêm dữ liệu vào kết quả trả về
         res.put("totalEvent", countedEvent);
@@ -275,14 +278,38 @@ public class EventService {
         res.put("totalTicket", countTicket);
         res.put("unpaidTicket", countTicketUnpaid);
         res.put("paidTicket", countTicketPaid);
-        res.put("canceledTicket", countTicketCanceled);
-
-        res.put("totalRevenuePaid", countTotalPricePaid != null ? countTotalPricePaid : 0);
-        res.put("totalRevenueUnpaid", countTotalPriceUnPaid != null ? countTotalPriceUnPaid : 0);
-        res.put("totalRevenueCanceled", countTotalPriceCanceled != null ? countTotalPriceCanceled : 0);
-        res.put("totalRevenue", countTotalPrice);
 
         return res;
+    }
+
+
+    public Double getTotalPriceWithStatus(int year, int month, String status) {
+        return eventTicketRepository.getTotalPriceForMonthAndStatus(year, month, status);
+    }
+
+//    public Map<Integer, Double> getTotalPriceForYear(int year, String status) {
+//        List<Object[]> results = eventTicketRepository.getMonthlyTotalPrice(year, status);
+//
+//        Map<Integer, Double> monthlyRevenue = new HashMap<>();
+//
+//        // Duyệt qua kết quả và lưu vào Map với key = tháng, value = tổng tiền
+//        for (Object[] result : results) {
+//            Integer month = (Integer) result[0];
+//            Double totalPrice = (Double) result[1];
+//            monthlyRevenue.put(month, totalPrice);
+//        }
+//
+//        return monthlyRevenue; // Trả về dữ liệu dạng {1=500.0, 2=800.0, ..., 12=300.0}
+//    }
+
+    public List<Map<String, Object>> getMonthlyTotalRevenueByStatus(int year) {
+        List<Object[]> results = eventTicketRepository.getMonthlyTotalPriceByStatus(year);
+
+        return results.stream().map(obj -> Map.of(
+                "month", obj[0],
+                "ticketStatus", obj[1],
+                "totalPrice", obj[2]
+        )).collect(Collectors.toList());
     }
 
 }
