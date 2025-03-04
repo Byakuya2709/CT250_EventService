@@ -31,6 +31,8 @@ public class EventTicket  implements Serializable{
 
     @Column(name = "ticket_userid")
     private String ticketUserId;
+    @Column(name = "ticket_useremail")
+    private String ticketUserEmail;
 
     @Column(name="ticket_day")
     private int ticketDay;
@@ -82,6 +84,14 @@ public class EventTicket  implements Serializable{
         this.ticketValidity = ticketValidity;
         this.ticketPosition = ticketPosition;
         this.event = event;
+    }
+
+    public String getTicketUserEmail() {
+        return ticketUserEmail;
+    }
+
+    public void setTicketUserEmail(String ticketUserEmail) {
+        this.ticketUserEmail = ticketUserEmail;
     }
 
     public int getTicketDay() {

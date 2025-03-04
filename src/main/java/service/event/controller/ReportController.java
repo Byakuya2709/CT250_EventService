@@ -7,10 +7,8 @@ package service.event.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import service.event.dto.EventTicketSummaryDTO;
 import service.event.repository.EventRepository;
 import service.event.services.EventService;
 import service.event.utils.ResponseHandler;
@@ -55,4 +53,16 @@ public class ReportController {
             return ResponseHandler.resBuilder("Có lỗi xảy ra trong hệ thống", HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
         }
     }
+
+    @GetMapping("/{companyId}")
+    public ResponseEntity<?> getEventTicketSummary(@PathVariable String companyId) {
+
+        try {
+            return ResponseHandler.resBuilder("Lấy báo cáo sự kiện thành công", HttpStatus.OK, eventService.getEventTicketSummaryByCompanyId(companyId));
+        } catch (Exception ex) {
+            return ResponseHandler.resBuilder("Có lỗi xảy ra trong hệ thống", HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        }
+    }
+
+
 }

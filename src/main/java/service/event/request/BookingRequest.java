@@ -16,6 +16,15 @@ public class BookingRequest {
     String ticketPosition;
     String ticketDuration;
     String ticketZone;
+    String userEmail;
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
 
     public Long getEventId() {
         return eventId;

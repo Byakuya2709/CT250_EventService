@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,9 +31,18 @@ public interface EventTicketRepository extends JpaRepository<EventTicket, Long> 
 
     List<EventTicket> findByEventAndTicketDay(Event event, Integer day);
 
-    List<EventTicket> findByEventAndTicketStatus(Event event, EventTicket.TicketStatus status);
+    Page<EventTicket> findByTicketStatus(String ticketStatus, Pageable pageable);
 
-    List<EventTicket> findByEventAndTicketUserId(Event event, String userId);
+    Page<EventTicket> findByTicketUserEmail(String email, Pageable pageable);
+
+    Page<EventTicket> findByTicketStatusAndTicketUserEmailAndEvent_EventId(
+            String ticketStatus, String email, Long eventId, Pageable pageable
+    );
+    // 🔹 Thêm các phương thức mới
+    Page<EventTicket> findByTicketStatusAndEvent(String ticketStatus, Event event, Pageable pageable);
+    Page<EventTicket> findByTicketUserEmailAndEvent(String email, Event event, Pageable pageable);
+    Page<EventTicket> findByTicketStatusAndTicketUserEmail(String ticketStatus, String email, Pageable pageable);
+    Page<EventTicket> findByEvent(Event event, Pageable pageable);
 
     //    @Query("SELECT e FROM EventTicket e WHERE e.ticketDate BETWEEN :startDate AND :endDate")
 //    List<EventTicket> findTicketsByDateRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
@@ -80,5 +91,10 @@ public interface EventTicketRepository extends JpaRepository<EventTicket, Long> 
     Double sumTicketPriceByEvent(@Param("event") Event event); // Tổng giá vé theo sự kiện
 
     Optional<EventTicket> findByTransaction(VNPayTransaction transaction);
+
+
+    @Query("SELECT et.ticketStatus, SUM(et.ticketPrice) FROM EventTicket et " +
+            "JOIN et.event e WHERE e.eventCompanyId = :companyId GROUP BY et.ticketStatus")
+    List<Object[]> calculateTotalTicketPriceByStatusAndCompanyId(String companyId);
 
 }

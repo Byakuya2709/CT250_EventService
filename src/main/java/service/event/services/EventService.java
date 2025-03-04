@@ -19,9 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import service.event.dto.EventDTO;
-import service.event.dto.EventStatsDTO;
-import service.event.dto.ZoneDTO;
+import service.event.dto.*;
 import service.event.exceptions.EventNotFoundException;
 import service.event.exceptions.FailedUpdateEventEx;
 import service.event.model.Event;
@@ -200,6 +198,11 @@ public class EventService {
         return eventRepository.findAllByEventCompanyId(companyId);
     }
 
+    public Page<EventSummary> getAllEventByCompanyId(String companyId,Pageable pageable){
+        return eventRepository.findByEventCompanyId(companyId,pageable);
+    }
+
+
     public Page<EventSummary> getAllEventSummary(String eventStatus, Pageable pageable) {
         return eventRepository.findByEventStatus(eventStatus, pageable);
     }
@@ -214,8 +217,8 @@ public class EventService {
         return eventRepository.countByEventCompanyId(companyId);
     }
 
-    public List<EventStatsDTO> getEventTicketStatisticsByCompanyId(String companyId) {
-        return eventRepository.getEventTicketStatisticsByCompanyId(companyId);
+    public Page<EventStatsDTO> getEventTicketStatisticsByCompanyId(String companyId,Pageable pageable) {
+        return eventRepository.getEventTicketStatisticsByCompanyId(companyId,pageable);
     }
 
 //    // Cập nhật sự kiện
@@ -242,6 +245,10 @@ public class EventService {
         } else {
             return false; // Trả về false nếu không tìm thấy sự kiện
         }
+    }
+
+    public List<EventProjection> getEventsInCurrentMonth() {
+        return eventRepository.findEventsInCurrentMonth();
     }
 
     public Map<String, Object> reportEvent() {
@@ -311,5 +318,83 @@ public class EventService {
                 "totalPrice", obj[2]
         )).collect(Collectors.toList());
     }
+    public List<Map<String, Object>> getEventSummariesByCompanyId(String companyId) {
+        List<Object[]> results = eventRepository.findEventIdAndTitleByCompanyId(companyId);
+        List<Map<String, Object>> events = new ArrayList<>();
+
+        for (Object[] row : results) {
+            Map<String, Object> event = new HashMap<>();
+            event.put("eventId", row[0]);
+            event.put("eventTitle", row[1]);
+            events.add(event);
+        }
+        return events;
+    }
+
+
+
+    public Page<?> searchEvents(
+            String companyId,
+            String eventStatus,
+            Integer month,
+            Integer year,
+            Pageable pageable) {
+
+        boolean hasCompanyId = companyId != null && !companyId.trim().isEmpty();
+        boolean hasEventStatus = eventStatus != null && !eventStatus.trim().isEmpty();
+        boolean hasMonth = month != null;
+        boolean hasYear = year != null;
+
+        if (hasCompanyId && hasEventStatus && hasMonth && hasYear) {
+            return eventRepository.findByEventCompanyIdAndEventStatusAndStartMonth(companyId, eventStatus, month, year, pageable);
+        } else if (hasCompanyId && hasMonth && hasYear) {
+            return eventRepository.findByEventCompanyIdAndStartMonth(companyId, month, year, pageable);
+        } else if (hasEventStatus && hasMonth && hasYear) {
+            return eventRepository.findByEventStatusAndStartMonth(eventStatus, month, year, pageable);
+        } else if (hasMonth && hasYear) {
+            return eventRepository.findByEventStartMonth(month, year, pageable);
+        } else if (hasCompanyId && hasEventStatus) {
+            return eventRepository.findByEventCompanyIdAndEventStatus(companyId, eventStatus, pageable);
+        } else if (hasCompanyId) {
+            return eventRepository.findByEventCompanyId(companyId, pageable);
+        } else if (hasEventStatus) {
+            return eventRepository.findByEventStatus(eventStatus, pageable);
+        }
+
+        return this.getAllEvents(pageable);
+    }
+
+
+    public EventTicketSummaryDTO getEventTicketSummaryByCompanyId(String companyId) {
+        // Lấy số lượng event theo status
+        List<Object[]> eventCountByStatusList = eventRepository.countEventsByCompanyIdAndStatus(companyId);
+
+        // Chuyển đổi List<Object[]> thành Map<String, Long>
+        Map<String, Long> eventCountByStatus = new HashMap<>();
+        for (Object[] result : eventCountByStatusList) {
+            String eventStatus = (String) result[0];
+            Long count = (Long) result[1];
+            eventCountByStatus.put(eventStatus, count);
+        }
+
+        // Lấy tổng ticket price theo status
+        List<Object[]> totalTicketPriceByStatusList = eventTicketRepository.calculateTotalTicketPriceByStatusAndCompanyId(companyId);
+
+        // Chuyển đổi List<Object[]> thành Map<String, Double>
+        Map<String, Double> totalTicketPriceByStatus = new HashMap<>();
+        for (Object[] result : totalTicketPriceByStatusList) {
+            String ticketStatus = (String) result[0];
+            Double totalTicketPrice = (Double) result[1];
+            totalTicketPriceByStatus.put(ticketStatus, totalTicketPrice);
+        }
+
+        // Tạo DTO và kết hợp cả 2 Map vào trong DTO
+        EventTicketSummaryDTO summaryDTO = new EventTicketSummaryDTO();
+        summaryDTO.setEventCountByStatus(eventCountByStatus);
+        summaryDTO.setTotalTicketPriceByStatus(totalTicketPriceByStatus);
+
+        return summaryDTO;
+    }
+
 
 }

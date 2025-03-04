@@ -5,11 +5,7 @@
 package service.event.controller;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +57,7 @@ public class EventController {
     @Autowired
     SubmissionService submissionService;
 
-//    @PostMapping("")
+    //    @PostMapping("")
 //    public ResponseEntity<?> saveEvent(@RequestBody EventDTO eventDTO) {
 //        try {
 //            // Gọi service để lưu sự kiện
@@ -121,19 +117,19 @@ public class EventController {
         }
     }
 
-    @GetMapping("/tag")
-    public ResponseEntity<?> getEventByTag(@RequestParam String tag,@RequestParam(defaultValue = "UP_COMMING") String status) {
-        try {
-            List<Event> res = eventService.get5ByTag(tag,status);
-            if (res.isEmpty()) {
-                return ResponseHandler.resBuilder("Không tồn tạisự kiện có tag này", HttpStatus.OK, null);
-            }
-
-            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, res);
-        } catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
-        }
-    }
+//    @GetMapping("/tag")
+//    public ResponseEntity<?> getEventByTag(@RequestParam String tag,@RequestParam(defaultValue = "UP_COMMING") String status) {
+//        try {
+//            List<Event> res = eventService.get5ByTag(tag,status);
+//            if (res.isEmpty()) {
+//                return ResponseHandler.resBuilder("Không tồn tạisự kiện có tag này", HttpStatus.OK, null);
+//            }
+//
+//            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, res);
+//        } catch (Exception e) {
+//            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
+//        }
+//    }
 
     @GetMapping("")
     public ResponseEntity<?> getAllEvent(
@@ -147,13 +143,50 @@ public class EventController {
             Page<Event> events = eventService.getAllEvents(pageable);
             return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, events);
         } catch (Exception e) {
-            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage().substring(0, 100), HttpStatus.INTERNAL_SERVER_ERROR, null);
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
-    
-     @GetMapping("/top-rated")
-    public ResponseEntity<List<Event>> getTopRatedEvents(@RequestParam(defaultValue = "5") int limit) {
-        return ResponseEntity.ok(eventService.getTopRatedEvents(limit));
+
+    @GetMapping("/filter")
+    public ResponseEntity<?> searchEvents(
+            @RequestParam(required = false) String companyId,
+            @RequestParam(required = false) String eventStatus,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        try{
+            Pageable pageable = PageRequest.of(page, size);
+            Page<?> result = eventService.searchEvents(companyId, eventStatus, month, year, pageable);
+            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, result);
+        }catch (Exception e ){
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+
+
+    }
+
+//     @GetMapping("/top-rated")
+//    public ResponseEntity<List<Event>> getTopRatedEvents(@RequestParam(defaultValue = "5") int limit) {
+//        try{
+//            return ResponseEntity.ok(eventService.getTopRatedEvents(limit));
+//        }catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(Collections.emptyList());
+//        }
+//
+//    }
+
+
+    @GetMapping("/company/{companyId}/filter")
+    public ResponseEntity<?> getEventsByCompany(@PathVariable String companyId) {
+        try {
+            List<Map<String, Object>> events = eventService.getEventSummariesByCompanyId(companyId);
+            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, events);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
     }
 
     @GetMapping("/{eventID}")
@@ -173,15 +206,16 @@ public class EventController {
     }
 
     @GetMapping("/company/{companyId}")
-    public ResponseEntity<?> getEventByCompanyId(@PathVariable String companyId) {
+    public ResponseEntity<?> getEventByCompanyId(@PathVariable String companyId,
+                                                 @RequestParam(defaultValue = "1") int page,
+                                                 @RequestParam(defaultValue = "10") int size) {
         try {
-            List<EventSummary> eventList = eventService.getAllEventsByCompanyId(companyId);
-
-            if (eventList.isEmpty()) {
-                return ResponseHandler.resBuilder("Không tìm thấy sự kiện", HttpStatus.NOT_FOUND, null);
+            if (size > 100) {
+                size = 100; // Cap size at 100 to prevent large queries
             }
-
-            return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, eventList);
+            Pageable pageable = PageRequest.of(page, size);
+            Page<EventSummary> events = eventService.getAllEventByCompanyId(companyId, pageable);
+            return ResponseHandler.resBuilder("Lấy thông tin sự kiện thành công", HttpStatus.OK, events);
         } catch (Exception e) {
             return ResponseHandler.resBuilder(
                     "Lỗi xảy ra trong quá trình lấy sự kiện: " + e.getMessage().substring(0, 100),
@@ -220,7 +254,7 @@ public class EventController {
         }
     }
 
-//    @PutMapping("/{eventID}")
+    //    @PutMapping("/{eventID}")
 //    public ResponseEntity<?> updateEvent(@PathVariable Long eventID, @RequestBody EventDTO eventDTO) {
 //        try {
 //            Event updatedEvent = eventService.updateEvent(eventID, eventDTO);
@@ -263,7 +297,7 @@ public class EventController {
         }
     }
 
-//    @GetMapping("/tickets/{eventID}")
+    //    @GetMapping("/tickets/{eventID}")
 //    public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID) {
 //        try {
 //            List<EventTicket> res = eventTicketService.getAllTicketByEvent(eventID);
@@ -281,7 +315,7 @@ public class EventController {
 //    }
     @GetMapping("/tickets/{eventID}")
     public ResponseEntity<?> getTicketByEventId(@PathVariable Long eventID,
-            @RequestParam(name = "day", required = false) Integer day) {
+                                                @RequestParam(name = "day", required = false) Integer day) {
         try {
             List<EventTicket> res;
 
@@ -380,15 +414,37 @@ public class EventController {
     }
 
     @GetMapping("/{CompanyId}/statistic")
-    public ResponseEntity<?> getEventTicketStatisticsByCompanyId(@PathVariable String CompanyId) {
+    public ResponseEntity<?> getEventTicketStatisticsByCompanyId(@PathVariable String CompanyId,
+                                                                 @RequestParam(defaultValue = "0") int page,
+                                                                 @RequestParam(defaultValue = "10") int size
+    ) {
         try {
-            List<EventStatsDTO> stats = eventService.getEventTicketStatisticsByCompanyId(CompanyId);
+            Pageable pageable = PageRequest.of(page, size);
+            Page<EventStatsDTO> stats = eventService.getEventTicketStatisticsByCompanyId(CompanyId,pageable);
             return ResponseHandler.resBuilder("Lấy thống kê sự kiện thành công", HttpStatus.OK, stats);
 
         } catch (Exception e) {
             String errorMessage = e.getMessage().length() > 100 ? e.getMessage().substring(0, 100) : e.getMessage();
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy thông tin: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
+
+
     }
+
+
+    @GetMapping("/tickets")
+    public ResponseEntity<Page<EventTicket>> getTickets(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String userEmail,
+            @RequestParam(required = false) Long eventId) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EventTicket> tickets = eventTicketService.getTickets(status, userEmail, eventId, pageable);
+
+        return ResponseEntity.ok(tickets);
+    }
+
 
 }

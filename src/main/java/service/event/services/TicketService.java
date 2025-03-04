@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import service.event.exceptions.CapacityExceededException;
 import service.event.exceptions.EntityNotFoundExceptions;
@@ -134,6 +137,8 @@ public class TicketService {
         eventTicket.setTicketStatus(EventTicket.TicketStatus.UNPAID.toString());
         eventTicket.setTicketValidity(EventTicket.TicketValidity.INACTIVE.toString());
         eventTicket.setTicketDay(Integer.parseInt(request.getDay()));
+        eventTicket.setTicketUserEmail(request.getUserEmail());
+
         return eventTicket;
     }
 
@@ -247,6 +252,31 @@ public class TicketService {
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
         Double totalPrice = eventTicketRepository.sumTicketPriceByEvent(event);
         return totalPrice != null ? totalPrice : 0.0;
+    }
+
+    public Page<EventTicket> getTickets(String status, String userEmail, Long eventId, Pageable pageable) {
+        if (eventId != null) {
+            Event event = eventRepository.findById(eventId)
+                    .orElseThrow(() -> new EventNotFoundException("Event not found"));
+
+            if (status != null && userEmail != null) {
+                return eventTicketRepository.findByTicketStatusAndTicketUserEmailAndEvent_EventId(status, userEmail, eventId, pageable);
+            } else if (status != null) {
+                return eventTicketRepository.findByTicketStatusAndEvent(status, event, pageable);
+            } else if (userEmail != null) {
+                return eventTicketRepository.findByTicketUserEmailAndEvent(userEmail, event, pageable);
+            } else {
+                return eventTicketRepository.findByEvent(event, pageable);
+            }
+        } else if (status != null && userEmail != null) {
+            return eventTicketRepository.findByTicketStatusAndTicketUserEmail(status, userEmail, pageable);
+        } else if (status != null) {
+            return eventTicketRepository.findByTicketStatus(status, pageable);
+        } else if (userEmail != null) {
+            return eventTicketRepository.findByTicketUserEmail(userEmail, pageable);
+        } else {
+            return eventTicketRepository.findAll(pageable);
+        }
     }
 
 
