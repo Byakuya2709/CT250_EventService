@@ -4,6 +4,8 @@
  */
 package service.event.services;
 
+import com.google.zxing.WriterException;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.temporal.ChronoUnit;
@@ -30,6 +32,7 @@ import service.event.repository.EventTicketZoneRepository;
 import service.event.request.BookingRequest;
 import service.event.request.TicketCapacityRequest;
 import service.event.utils.DateUtils;
+import service.event.utils.QRUtils;
 
 /**
  *
@@ -46,6 +49,10 @@ public class TicketService {
 
     @Autowired
     private EventRepository eventRepository;
+
+    public void cancelledTicket(Long ticketId) {
+        eventTicketRepository.deleteById(ticketId);
+    }
 
     public List<EventTicketZone> findByEventAndDay(TicketCapacityRequest request) {
         Event event = eventRepository.findById(request.getEventId())
@@ -65,10 +72,14 @@ public class TicketService {
         return eventTicketRepository.findById(ticketId).orElseThrow(() -> new EntityNotFoundExceptions("Ticket not found"));
     }
 
-    public EventTicket updatePAIDTicket(VNPayTransaction transaction) {
+    public EventTicket updatePAIDTicket(VNPayTransaction transaction) throws WriterException, IOException  {
         EventTicket ticket = eventTicketRepository.findByTransaction(transaction)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
         ticket.setTicketStatus(EventTicket.TicketStatus.PAID.toString());
+        
+        
+        byte[] qrCode = QRUtils.generateQRCode(ticket);
+        ticket.setQrCode(qrCode);
         return eventTicketRepository.save(ticket);
     }
 
@@ -85,9 +96,9 @@ public class TicketService {
         return eventTicketRepository.findByEventAndTicketDay(event, day);
     }
 
-    public List<EventTicket> getAllTicketByUserId(String userId) {
+    public Page<EventTicket> getAllTicketByUserId(String userId,Pageable pageable) {
 
-        return eventTicketRepository.findByTicketUserId(userId);
+        return eventTicketRepository.findByTicketUserId(userId,pageable);
     }
 
     public EventTicket bookTicket(BookingRequest request) throws Exception {
@@ -278,7 +289,5 @@ public class TicketService {
             return eventTicketRepository.findAll(pageable);
         }
     }
-
-
 
 }

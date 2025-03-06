@@ -27,7 +27,7 @@ public interface EventTicketRepository extends JpaRepository<EventTicket, Long> 
 
     List<EventTicket> findByEvent(Event event);
 
-    List<EventTicket> findByTicketUserId(String ticketUserId); // Lấy danh sách vé theo user
+    Page<EventTicket> findByTicketUserId(String ticketUserId,Pageable pageable); // Lấy danh sách vé theo user
 
     List<EventTicket> findByEventAndTicketDay(Event event, Integer day);
 

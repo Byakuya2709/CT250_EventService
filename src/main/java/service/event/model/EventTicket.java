@@ -47,6 +47,10 @@ public class EventTicket  implements Serializable{
     @JoinColumn(name = "event_id", nullable = false)
     @JsonIgnore
     private Event event;
+    
+    @Lob
+    @Column(name = "qr_code", columnDefinition = "BLOB", nullable = true)
+    private byte[] qrCode;
 
     @OneToOne
     @JoinColumn(name = "transaction_id") // Liên kết đến VNPayTransaction
@@ -109,6 +113,14 @@ public class EventTicket  implements Serializable{
 
     public void setTicketUserId(String ticketUserId) {
         this.ticketUserId = ticketUserId;
+    }
+
+    public byte[] getQrCode() {
+        return qrCode;
+    }
+
+    public void setQrCode(byte[] qrCode) {
+        this.qrCode = qrCode;
     }
 
     // Getter và Setter

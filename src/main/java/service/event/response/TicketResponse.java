@@ -12,7 +12,8 @@ import service.event.model.EventTicket;
  * @author admin
  */
 public class TicketResponse {
-     private Long ticketId;
+
+    private Long ticketId;
     private Double ticketPrice;
     private String ticketStatus;
 
@@ -23,7 +24,7 @@ public class TicketResponse {
     private String ticketDuration;
 
     private String ticketUserId;
-    
+
     private int ticketDay;
 
     private Date ticketDayActive; // nếu vé single day thì day active là ngày chọn mua, nếu all day thì day acitve là ngày bắt đầu sự kiện
@@ -33,27 +34,42 @@ public class TicketResponse {
     private Long eventId;
     private String companyId;
     private String eventTitle;
-
-public TicketResponse(EventTicket ticket) {
-    this.ticketId = ticket.getTicketId();
-    this.ticketPrice = ticket.getTicketPrice();
-    this.ticketStatus = ticket.getTicketStatus();
-    this.ticketValidity = ticket.getTicketValidity();
-    this.ticketPosition = ticket.getTicketPosition();
-    this.ticketDuration = ticket.getTicketDuration().toString();
-    this.ticketUserId = ticket.getTicketUserId();
-    this.ticketDay = ticket.getTicketDay();
-    this.ticketDayActive = ticket.getTicketDayActive();
-    this.ticketBookingTime = ticket.getTicketBookingTime();
-    this.eventId = ticket.getEvent().getEventId();
-    this.companyId = ticket.getEvent().getEventCompanyId();
-    this.eventTitle = ticket.getEvent().getEventTitle();
-}
-
-
     
-    
-    
+    private byte[] qrCode;
+
+    public TicketResponse(EventTicket ticket) {
+        this.ticketId = ticket.getTicketId();
+        this.ticketPrice = ticket.getTicketPrice();
+        this.ticketStatus = ticket.getTicketStatus();
+        this.ticketValidity = ticket.getTicketValidity();
+        this.ticketPosition = ticket.getTicketPosition();
+        this.ticketDuration = ticket.getTicketDuration().toString();
+        this.ticketUserId = ticket.getTicketUserId();
+        this.ticketDay = ticket.getTicketDay();
+        this.ticketDayActive = ticket.getTicketDayActive();
+        this.ticketBookingTime = ticket.getTicketBookingTime();
+        this.eventId = ticket.getEvent().getEventId();
+        this.companyId = ticket.getEvent().getEventCompanyId();
+        this.eventTitle = ticket.getEvent().getEventTitle();
+        this.qrCode = ticket.getQrCode();
+    }
+
+    public byte[] getQrCode() {
+        return qrCode;
+    }
+
+    public void setQrCode(byte[] qrCode) {
+        this.qrCode = qrCode;
+    }
+
+    public String getEventTitle() {
+        return eventTitle;
+    }
+
+    public void setEventTitle(String eventTitle) {
+        this.eventTitle = eventTitle;
+    }
+
     public Long getTicketId() {
         return ticketId;
     }
@@ -149,6 +165,8 @@ public TicketResponse(EventTicket ticket) {
     public void setCompanyId(String companyId) {
         this.companyId = companyId;
     }
-    
-    
+
+    public TicketResponse() {
+    }
+
 }
