@@ -12,12 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import service.event.exceptions.EventNotFoundException;
 import service.event.model.Event;
 import service.event.model.EventTicket;
@@ -65,6 +60,17 @@ public class TicketController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy vé đã đặt: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
+
+    @PatchMapping("/{ticketId}")
+    public ResponseEntity<?>  requestCancelledTicket(@PathVariable Long ticketId){
+        try {
+            TicketResponse  res = eventTicketService.requestCancelledTicket(ticketId);
+            return ResponseHandler.resBuilder("Hủy vé thành công", HttpStatus.OK, res);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi khi hủy vé: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
 
     @DeleteMapping("/{ticketId}")
     public ResponseEntity<?> cancelledTicket(@PathVariable Long ticketId) {

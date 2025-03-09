@@ -42,6 +42,8 @@ public class EventTicket  implements Serializable{
 
     @Column(name = "ticket_booking_time")
     private Date ticketBookingTime; // Thời gian đặt vé
+    @Column(name = "ticket_expired_time")
+    private Date ticketExpiredTime; // Thời gian hết hạn vé
     // Quan hệ với Event
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
@@ -70,7 +72,7 @@ public class EventTicket  implements Serializable{
     public enum TicketStatus {
         PAID, // Đã thanh toán
         UNPAID, // Chưa thanh toán
-        CANCELED    // Hủy
+        CANCELLED    // Hủy
         
     }
 
@@ -88,6 +90,14 @@ public class EventTicket  implements Serializable{
         this.ticketValidity = ticketValidity;
         this.ticketPosition = ticketPosition;
         this.event = event;
+    }
+
+    public Date getTicketExpiredTime() {
+        return ticketExpiredTime;
+    }
+
+    public void setTicketExpiredTime(Date ticketExpiredTime) {
+        this.ticketExpiredTime = ticketExpiredTime;
     }
 
     public String getTicketUserEmail() {

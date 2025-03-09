@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,8 +32,11 @@ import service.event.repository.EventTicketRepository;
 import service.event.repository.EventTicketZoneRepository;
 import service.event.request.BookingRequest;
 import service.event.request.TicketCapacityRequest;
+import service.event.response.TicketResponse;
 import service.event.utils.DateUtils;
 import service.event.utils.QRUtils;
+
+import javax.transaction.Transactional;
 
 /**
  *
@@ -51,8 +55,62 @@ public class TicketService {
     private EventRepository eventRepository;
 
     public void cancelledTicket(Long ticketId) {
+        // Tìm vé theo ID
+        EventTicket ticket = eventTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new EventNotFoundException("Ticket not found"));
+
+        // Lấy thông tin sự kiện & loại vé
+        Event event = ticket.getEvent();
+        EventTicket.TicketDay ticketType = ticket.getTicketDuration();
+        String ticketZone = ticket.getTicketPosition().split("_")[0]; // Lấy phần "VIP", "STANDARD", "ECONOMY"
+        int ticketDay = ticket.getTicketDay(); // Ngày vé có hiệu lực
+
+        if (ticketType == EventTicket.TicketDay.SINGLE_DAY) {
+            // Lấy khu vực theo ngày cụ thể
+            EventTicketZone zone = eventTicketZoneRepository.findByEventAndDayAndZoneName(event, ticketDay, ticketZone)
+                    .orElseThrow(() -> new RuntimeException("Zone not found!"));
+
+            // Cập nhật lại số lượng vé còn lại
+            zone.setRemainingCapacity(zone.getRemainingCapacity() + 1);
+            eventTicketZoneRepository.save(zone);
+
+        } else if (ticketType == EventTicket.TicketDay.ALL_DAYS) {
+            // Lấy tất cả ngày của zone tương ứng
+            List<EventTicketZone> matchingZones = eventTicketZoneRepository.findByEvent(event).stream()
+                    .filter(zone -> extractZoneType(zone.getZoneName()).equals(ticketZone))
+                    .collect(Collectors.toList());
+
+            // Cập nhật lại số lượng vé của từng ngày
+            for (EventTicketZone zone : matchingZones) {
+                zone.setRemainingCapacity(zone.getRemainingCapacity() + 1);
+                eventTicketZoneRepository.save(zone);
+            }
+        }
+
+        // Xóa vé khỏi database
         eventTicketRepository.deleteById(ticketId);
     }
+    private String extractZoneType(String zoneName) {
+        return zoneName.split("_")[0]; // Tách lấy phần "VIP", "STANDARD", "ECONOMY"
+    }
+
+    @Transactional
+    public TicketResponse requestCancelledTicket(Long ticketId) {
+        EventTicket ticket = eventTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new EventNotFoundException("Ticket not found"));
+
+        // Kiểm tra nếu vé đã bị hủy trước đó
+        if (ticket.getTicketStatus().equals(EventTicket.TicketStatus.CANCELLED.toString())) {
+            throw new IllegalStateException("Ticket has already been canceled");
+        }
+
+        ticket.setTicketStatus(EventTicket.TicketStatus.CANCELLED.toString());
+
+        eventTicketRepository.save(ticket);
+
+        return new TicketResponse(ticket);
+    }
+
 
     public List<EventTicketZone> findByEventAndDay(TicketCapacityRequest request) {
         Event event = eventRepository.findById(request.getEventId())
@@ -142,6 +200,7 @@ public class TicketService {
     private EventTicket createBaseTicket(BookingRequest request, Event event, EventTicket.TicketDay ticketDuration) {
         EventTicket eventTicket = new EventTicket();
         eventTicket.setEvent(event);
+        eventTicket.setTicketExpiredTime(event.getEventEndDate());
         eventTicket.setTicketUserId(request.getUserId());
         eventTicket.setTicketPosition(request.getTicketPosition());
         eventTicket.setTicketDuration(ticketDuration);
@@ -190,30 +249,40 @@ public class TicketService {
      * Xử lý đặt vé loại ALL_DAYS
      */
     private void processAllDaysTicket(BookingRequest request, Event event, EventTicket eventTicket) {
-        List<EventTicketZone> totalCapacity = eventTicketZoneRepository.findByEvent(event);
+        // Lấy tất cả zone của sự kiện
+        List<EventTicketZone> allZones = eventTicketZoneRepository.findByEvent(event);
 
-        if (totalCapacity.isEmpty()) {
+        if (allZones.isEmpty()) {
             throw new CapacityExceededException("No remaining capacity for all-day tickets.");
         }
 
-        // Kiểm tra tất cả ngày còn vé không
-        for (EventTicketZone capacityDay : totalCapacity) {
+        int totalDays = event.getTotalDays(); // Tổng số ngày của sự kiện
+
+        // Lọc danh sách zone đúng với zone khách chọn (VIP, STANDARD, ECONOMY)
+        List<EventTicketZone> selectedZones = allZones.stream()
+                .filter(zone -> zone.getZoneName().equals(request.getTicketZone()))
+                .collect(Collectors.toList());
+
+        if (selectedZones.size() < totalDays) {
+            throw new CapacityExceededException("Not enough capacity for all-day tickets.");
+        }
+
+        double zoneRate = 1.0; // Mặc định
+
+        // Kiểm tra tất cả các ngày của zone có còn vé không
+        for (EventTicketZone capacityDay : selectedZones) {
             if (capacityDay.getRemainingCapacity() <= 0) {
                 throw new CapacityExceededException("No remaining capacity for all-day tickets.");
             }
         }
 
-        int totalDays = event.getTotalDays(); // Giả sử phương thức này tồn tại
-
-        // Tính giá vé
-        double zoneRate = 1.0;
-        // Giảm số lượng vé
-        for (EventTicketZone capacityDay : totalCapacity) {
+        // Giảm số lượng vé của **tất cả các ngày của zone đó**
+        for (EventTicketZone capacityDay : selectedZones) {
             updateZoneCapacity(capacityDay);
-            if (capacityDay.getZoneName().equals(request.getTicketZone())) {
-                zoneRate = capacityDay.getZoneRate();
-            }
+            zoneRate = capacityDay.getZoneRate(); // Lấy zone rate từ ngày đầu tiên
         }
+
+        // Cập nhật giá vé dựa trên số ngày
         eventTicket.setTicketPrice(
                 BigDecimal.valueOf(request.getTicketPrice() * zoneRate * totalDays)
                         .setScale(2, RoundingMode.HALF_UP)
@@ -223,6 +292,8 @@ public class TicketService {
         // Ngày active mặc định là ngày bắt đầu sự kiện
         eventTicket.setTicketDayActive(event.getEventStartDate());
     }
+
+
 
     /**
      * Chuyển đổi ngày vé từ String sang Integer, kiểm tra lỗi

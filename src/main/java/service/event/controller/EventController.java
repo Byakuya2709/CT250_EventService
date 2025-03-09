@@ -131,6 +131,7 @@ public class EventController {
 //        }
 //    }
 
+
     @GetMapping("")
     public ResponseEntity<?> getAllEvent(
             @RequestParam(defaultValue = "1") int page,
