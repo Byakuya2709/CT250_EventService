@@ -25,6 +25,10 @@ import service.event.model.EventSummary;
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
 
+    @Query("SELECT e FROM Event e WHERE LOWER(e.eventTitleNormalized) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<Event> searchByVietnameseKeyword(@Param("keyword") String keyword, Pageable pageable);
+
+
     Page<Event> findAll(Pageable pageable);
 
     List<EventSummary> findAllByEventCompanyId(String eventCompanyId);
@@ -67,7 +71,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     long countByEventCompanyId(String eventCompanyId);
 
-    @Query(value = "SELECT * FROM event e WHERE (e.event_tags LIKE CONCAT('%|', :tag, '|%') OR e.event_tags LIKE CONCAT(:tag, '|%') OR e.event_tags LIKE CONCAT('%|', :tag) OR e.event_tags = :tag) AND e.event_status = :status LIMIT 5", nativeQuery = true)
+    @Query(value = "SELECT * FROM event e WHERE (e.event_tags LIKE CONCAT('%|', :tag, '|%') OR e.event_tags LIKE CONCAT(:tag, '|%') OR e.event_tags LIKE CONCAT('%|', :tag) OR e.event_tags = :tag) AND e.event_status = :status LIMIT 10", nativeQuery = true)
     List<Event> findByEventTagAndEventStatus(@Param("tag") String tag, @Param("status") String status);
 
 //    @Query("SELECT e FROM Event e WHERE MONTH(e.eventStartDate) = MONTH(CURRENT_DATE) AND YEAR(e.eventStartDate) = YEAR(CURRENT_DATE)")
@@ -81,7 +85,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             "FROM event e " +
             "WHERE MONTH(e.event_startdate) = MONTH(CURDATE()) " +
             "AND YEAR(e.event_startdate) = YEAR(CURDATE()) " +
-            "LIMIT 10",
+            "LIMIT 6",
             nativeQuery = true)
     List<EventProjection> findEventsInCurrentMonth();
 

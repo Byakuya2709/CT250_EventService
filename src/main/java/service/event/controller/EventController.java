@@ -148,6 +148,13 @@ public class EventController {
         }
     }
 
+
+    @GetMapping("/normalize-titles")
+    public String normalizeAllTitles() {
+        eventService.updateNormalizedTitles();
+        return "Cập nhật eventTitle_normalized thành công!";
+    }
+
     @GetMapping("/filter")
     public ResponseEntity<?> searchEvents(
             @RequestParam(required = false) String companyId,

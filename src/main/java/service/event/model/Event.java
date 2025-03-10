@@ -5,8 +5,11 @@
 package service.event.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import service.event.utils.TextUtils;
+
 import java.io.Serializable;
 
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -15,21 +18,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
-import javax.persistence.MapKeyColumn;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import java.util.regex.Pattern;
+import javax.persistence.*;
 
 /**
  * @author admin
@@ -42,6 +32,8 @@ public class Event implements Serializable{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "event_id")
     private Long eventId;
+
+    private String eventTitleNormalized;
 
     @Column(name = "event_title", nullable = false)
     private String eventTitle;
@@ -77,6 +69,25 @@ public class Event implements Serializable{
 
     @Column(name = "event_company_id")
     private String eventCompanyId;
+
+
+
+    @PrePersist
+    @PreUpdate
+    public void normalizeTitle() {
+        this.eventTitleNormalized = TextUtils.removeAccents(this.eventTitle);
+    }
+
+    // Hàm loại bỏ dấu tiếng Việt
+//    public static String removeAccents(String text) {
+//        if (text == null) return null;
+//        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+//        Pattern pattern = Pattern.compile("\\p{M}");
+//        return pattern.matcher(normalized).replaceAll("")
+//                .replace("đ", "d")
+//                .replace("Đ", "D");
+//    }
+
 
     @ElementCollection
     @CollectionTable(name = "event_list_artist", joinColumns = @JoinColumn(name = "event_id"))
@@ -261,6 +272,11 @@ public class Event implements Serializable{
         this.eventPrice = eventPrice;
     }
 
-    
+    public String getEventTitleNormalized() {
+        return eventTitleNormalized;
+    }
 
+    public void setEventTitleNormalized(String eventTitleNormalized) {
+        this.eventTitleNormalized = eventTitleNormalized;
+    }
 }

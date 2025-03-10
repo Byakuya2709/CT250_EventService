@@ -2,6 +2,9 @@ package service.event.controller;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +14,7 @@ import service.event.model.Event;
 import service.event.response.OneEventResponse;
 import service.event.services.EventService;
 import service.event.utils.ResponseHandler;
+import service.event.utils.TextUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +24,24 @@ import java.util.List;
 public class PublicController {
     @Autowired
     EventService eventService;
+
+    @GetMapping("/search-text")
+    public ResponseEntity<?> searchEventByKeyword(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) { // Thêm size và giá trị mặc định
+        try {
+            String keywordNoAccent = TextUtils.removeAccents(keyword);
+            System.out.println(keywordNoAccent);
+            Page<Event> res = eventService.searchEvents(keywordNoAccent, page, size);
+
+            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, res);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+
+
 
     @GetMapping("/tag")
     public ResponseEntity<?> getEventByTag(@RequestParam String tag, @RequestParam(defaultValue = "UP_COMMING") String status) {
@@ -72,4 +94,24 @@ public class PublicController {
         }
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<?> searchEvents(
+            @RequestParam(required = false) String companyId,
+            @RequestParam(required = false) String eventStatus,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        try{
+            companyId = null;
+            Pageable pageable = PageRequest.of(page, size);
+            Page<?> result = eventService.searchEvents(companyId, eventStatus, month, year, pageable);
+            return ResponseHandler.resBuilder("Lấy danh sách sự kiện thành công", HttpStatus.OK, result);
+        }catch (Exception e ){
+            return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+
+
+    }
 }

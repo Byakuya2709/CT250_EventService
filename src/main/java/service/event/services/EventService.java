@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import service.event.dto.*;
@@ -31,6 +32,9 @@ import service.event.repository.EventTicketZoneRepository;
 import service.event.request.TicketCapacityRequest;
 import service.event.request.UpdatedZoneRequest;
 import service.event.utils.DateUtils;
+import service.event.utils.TextUtils;
+
+import javax.transaction.Transactional;
 
 /**
  *
@@ -49,6 +53,21 @@ public class EventService {
     EventTicketRepository eventTicketRepository;
 //    @Autowired
 //    EventTicketCapacityRepository eventTicketCapacityRepository;
+
+
+    public Page<Event> searchEvents(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return eventRepository.searchByVietnameseKeyword(keyword, pageable);
+    }
+
+    @Transactional
+    public void updateNormalizedTitles() {
+        List<Event> events = eventRepository.findAll();
+        for (Event event : events) {
+            event.setEventTitleNormalized(TextUtils.removeAccents(event.getEventTitle()));
+            eventRepository.save(event);
+        }
+    }
 
     public Event saveEvent(EventDTO eventDTO) {
         Event event = new Event();
