@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import service.event.exceptions.EventNotFoundException;
 import service.event.model.Event;
 import service.event.model.EventTicket;
+import service.event.request.RatingRequest;
 import service.event.response.OneEventResponse;
 import service.event.response.TicketResponse;
 import service.event.services.EventService;
@@ -32,6 +33,8 @@ public class TicketController {
 
     @Autowired
     TicketService eventTicketService;
+    @Autowired 
+    EventService eventService;
     
 
     @GetMapping("/buy/{userId}")
@@ -62,7 +65,17 @@ public class TicketController {
     }
 
     @PatchMapping("/{ticketId}")
-    public ResponseEntity<?>  requestCancelledTicket(@PathVariable Long ticketId){
+    public ResponseEntity<?>  requestCancelledTicket(@PathVariable Long ticketId,@RequestBody RatingRequest req){
+        try {
+            EventTicket  res = eventService.ratingEvent(ticketId, req);
+            return ResponseHandler.resBuilder("Đánh giá sự kiện thành công", HttpStatus.OK, res);
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi:"+ e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+    
+    @PatchMapping("/rating/{ticketId}")
+    public ResponseEntity<?> ratingEvent(@PathVariable Long ticketId){
         try {
             TicketResponse  res = eventTicketService.requestCancelledTicket(ticketId);
             return ResponseHandler.resBuilder("Hủy vé thành công", HttpStatus.OK, res);

@@ -34,6 +34,8 @@ public class TicketResponse {
     private Long eventId;
     private String companyId;
     private String eventTitle;
+    private Date ticketExpiredTime;
+    private boolean isRating;
     
     private byte[] qrCode;
 
@@ -52,6 +54,16 @@ public class TicketResponse {
         this.companyId = ticket.getEvent().getEventCompanyId();
         this.eventTitle = ticket.getEvent().getEventTitle();
         this.qrCode = ticket.getQrCode();
+        this.ticketExpiredTime = ticket.getTicketExpiredTime();
+        this.isRating = ticket.isTicketRating();
+    }
+
+    public Date getTicketExpiredTime() {
+        return ticketExpiredTime;
+    }
+
+    public void setTicketExpiredTime(Date ticketExpiredTime) {
+        this.ticketExpiredTime = ticketExpiredTime;
     }
 
     public byte[] getQrCode() {
@@ -64,6 +76,14 @@ public class TicketResponse {
 
     public String getEventTitle() {
         return eventTitle;
+    }
+
+    public boolean isIsRating() {
+        return isRating;
+    }
+
+    public void setIsRating(boolean isRating) {
+        this.isRating = isRating;
     }
 
     public void setEventTitle(String eventTitle) {

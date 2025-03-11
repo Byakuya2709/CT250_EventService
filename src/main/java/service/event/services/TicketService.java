@@ -37,6 +37,7 @@ import service.event.utils.DateUtils;
 import service.event.utils.QRUtils;
 
 import javax.transaction.Transactional;
+import service.event.request.RatingRequest;
 
 /**
  *
@@ -44,16 +45,16 @@ import javax.transaction.Transactional;
  */
 @Service
 public class TicketService {
-
+    
     @Autowired
     private EventTicketRepository eventTicketRepository;
-
+    
     @Autowired
     private EventTicketZoneRepository eventTicketZoneRepository;
-
+    
     @Autowired
     private EventRepository eventRepository;
-
+    
     public void cancelledTicket(Long ticketId) {
         // Tìm vé theo ID
         EventTicket ticket = eventTicketRepository.findById(ticketId)
@@ -73,7 +74,7 @@ public class TicketService {
             // Cập nhật lại số lượng vé còn lại
             zone.setRemainingCapacity(zone.getRemainingCapacity() + 1);
             eventTicketZoneRepository.save(zone);
-
+            
         } else if (ticketType == EventTicket.TicketDay.ALL_DAYS) {
             // Lấy tất cả ngày của zone tương ứng
             List<EventTicketZone> matchingZones = eventTicketZoneRepository.findByEvent(event).stream()
@@ -90,10 +91,11 @@ public class TicketService {
         // Xóa vé khỏi database
         eventTicketRepository.deleteById(ticketId);
     }
+
     private String extractZoneType(String zoneName) {
         return zoneName.split("_")[0]; // Tách lấy phần "VIP", "STANDARD", "ECONOMY"
     }
-
+    
     @Transactional
     public TicketResponse requestCancelledTicket(Long ticketId) {
         EventTicket ticket = eventTicketRepository.findById(ticketId)
@@ -103,62 +105,60 @@ public class TicketService {
         if (ticket.getTicketStatus().equals(EventTicket.TicketStatus.CANCELLED.toString())) {
             throw new IllegalStateException("Ticket has already been canceled");
         }
-
+        
         ticket.setTicketStatus(EventTicket.TicketStatus.CANCELLED.toString());
-
+        
         eventTicketRepository.save(ticket);
-
+        
         return new TicketResponse(ticket);
     }
-
-
+    
     public List<EventTicketZone> findByEventAndDay(TicketCapacityRequest request) {
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-
+        
         return eventTicketZoneRepository.findByEventAndDay(event, request.getDay());
     }
-
+    
     public List<EventTicket> findAllTicketByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-
+        
         return eventTicketRepository.findByEvent(event);
     }
-
+    
     public EventTicket findById(Long ticketId) {
         return eventTicketRepository.findById(ticketId).orElseThrow(() -> new EntityNotFoundExceptions("Ticket not found"));
     }
-
-    public EventTicket updatePAIDTicket(VNPayTransaction transaction) throws WriterException, IOException  {
+    
+    public EventTicket updatePAIDTicket(VNPayTransaction transaction) throws WriterException, IOException {
         EventTicket ticket = eventTicketRepository.findByTransaction(transaction)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
         ticket.setTicketStatus(EventTicket.TicketStatus.PAID.toString());
-        
         
         byte[] qrCode = QRUtils.generateQRCode(ticket);
         ticket.setQrCode(qrCode);
         return eventTicketRepository.save(ticket);
     }
-
+    
     public List<EventTicketZone> findByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
-
+        
         return eventTicketZoneRepository.findByEvent(event);
     }
-
+    
     public List<EventTicket> getAllTicketByEventAndDay(Long eventId, Integer day) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
         return eventTicketRepository.findByEventAndTicketDay(event, day);
     }
-
-    public Page<EventTicket> getAllTicketByUserId(String userId,Pageable pageable) {
-
-        return eventTicketRepository.findByTicketUserId(userId,pageable);
+    
+    public Page<EventTicket> getAllTicketByUserId(String userId, Pageable pageable) {
+        
+        return eventTicketRepository.findByTicketUserId(userId, pageable);
     }
-
+    
     public EventTicket bookTicket(BookingRequest request) throws Exception {
         // Kiểm tra xem sự kiện có tồn tại không
         Event event = eventRepository.findById(request.getEventId())
@@ -169,7 +169,7 @@ public class TicketService {
 
         // Tạo vé mới và thiết lập thông tin cơ bản
         EventTicket eventTicket = createBaseTicket(request, event, ticketDuration);
-
+        
         if (ticketDuration == EventTicket.TicketDay.SINGLE_DAY) {
             processSingleDayTicket(request, event, eventTicket);
         } else if (ticketDuration == EventTicket.TicketDay.ALL_DAYS) {
@@ -208,7 +208,7 @@ public class TicketService {
         eventTicket.setTicketValidity(EventTicket.TicketValidity.INACTIVE.toString());
         eventTicket.setTicketDay(Integer.parseInt(request.getDay()));
         eventTicket.setTicketUserEmail(request.getUserEmail());
-
+        eventTicket.setTicketRating(false);
         return eventTicket;
     }
 
@@ -251,22 +251,22 @@ public class TicketService {
     private void processAllDaysTicket(BookingRequest request, Event event, EventTicket eventTicket) {
         // Lấy tất cả zone của sự kiện
         List<EventTicketZone> allZones = eventTicketZoneRepository.findByEvent(event);
-
+        
         if (allZones.isEmpty()) {
             throw new CapacityExceededException("No remaining capacity for all-day tickets.");
         }
-
+        
         int totalDays = event.getTotalDays(); // Tổng số ngày của sự kiện
 
         // Lọc danh sách zone đúng với zone khách chọn (VIP, STANDARD, ECONOMY)
         List<EventTicketZone> selectedZones = allZones.stream()
                 .filter(zone -> zone.getZoneName().equals(request.getTicketZone()))
                 .collect(Collectors.toList());
-
+        
         if (selectedZones.size() < totalDays) {
             throw new CapacityExceededException("Not enough capacity for all-day tickets.");
         }
-
+        
         double zoneRate = 1.0; // Mặc định
 
         // Kiểm tra tất cả các ngày của zone có còn vé không
@@ -293,8 +293,6 @@ public class TicketService {
         eventTicket.setTicketDayActive(event.getEventStartDate());
     }
 
-
-
     /**
      * Chuyển đổi ngày vé từ String sang Integer, kiểm tra lỗi
      */
@@ -316,31 +314,31 @@ public class TicketService {
         zone.setRemainingCapacity(zone.getRemainingCapacity() - 1);
         eventTicketZoneRepository.save(zone);
     }
-
+    
     public List<EventTicket> getAllTicketByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
         return eventTicketRepository.findByEvent(event);
     }
-
+    
     public long countTicketsByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
         return eventTicketRepository.countByEvent(event);
     }
-
+    
     public Double getTotalTicketPriceByEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EventNotFoundException("Event not found"));
         Double totalPrice = eventTicketRepository.sumTicketPriceByEvent(event);
         return totalPrice != null ? totalPrice : 0.0;
     }
-
+    
     public Page<EventTicket> getTickets(String status, String userEmail, Long eventId, Pageable pageable) {
         if (eventId != null) {
             Event event = eventRepository.findById(eventId)
                     .orElseThrow(() -> new EventNotFoundException("Event not found"));
-
+            
             if (status != null && userEmail != null) {
                 return eventTicketRepository.findByTicketStatusAndTicketUserEmailAndEvent_EventId(status, userEmail, eventId, pageable);
             } else if (status != null) {
@@ -360,5 +358,5 @@ public class TicketService {
             return eventTicketRepository.findAll(pageable);
         }
     }
-
+    
 }

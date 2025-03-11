@@ -71,6 +71,10 @@ public class EventController {
 //        // Xử lý lỗi khi không thể parse ngày tháng
 //
 //    }
+    
+    
+    
+    
     @PostMapping("")
     public ResponseEntity<?> testEvent(@RequestBody EventDTO eventDTO) {
         try {

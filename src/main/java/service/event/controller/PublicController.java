@@ -56,6 +56,8 @@ public class PublicController {
             return ResponseHandler.resBuilder("Lỗi xảy ra trong quá trình lấy event" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
+    
+   
 
     @GetMapping("/top-rated")
     public ResponseEntity<List<Event>> getTopRatedEvents(@RequestParam(defaultValue = "5") int limit) {

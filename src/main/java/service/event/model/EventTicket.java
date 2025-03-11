@@ -50,6 +50,8 @@ public class EventTicket  implements Serializable{
     @JsonIgnore
     private Event event;
     
+    private boolean ticketRating;
+    
     @Lob
     @Column(name = "qr_code", columnDefinition = "BLOB", nullable = true)
     private byte[] qrCode;
@@ -114,6 +116,14 @@ public class EventTicket  implements Serializable{
 
     public void setTicketDay(int ticketDay) {
         this.ticketDay = ticketDay;
+    }
+
+    public boolean isTicketRating() {
+        return ticketRating;
+    }
+
+    public void setTicketRating(boolean ticketRating) {
+        this.ticketRating = ticketRating;
     }
 
 

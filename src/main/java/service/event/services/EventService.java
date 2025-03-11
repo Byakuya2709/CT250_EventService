@@ -35,6 +35,8 @@ import service.event.utils.DateUtils;
 import service.event.utils.TextUtils;
 
 import javax.transaction.Transactional;
+import service.event.model.EventTicket;
+import service.event.request.RatingRequest;
 
 /**
  *
@@ -53,7 +55,6 @@ public class EventService {
     EventTicketRepository eventTicketRepository;
 //    @Autowired
 //    EventTicketCapacityRepository eventTicketCapacityRepository;
-
 
     public Page<Event> searchEvents(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -217,10 +218,9 @@ public class EventService {
         return eventRepository.findAllByEventCompanyId(companyId);
     }
 
-    public Page<EventSummary> getAllEventByCompanyId(String companyId,Pageable pageable){
-        return eventRepository.findByEventCompanyId(companyId,pageable);
+    public Page<EventSummary> getAllEventByCompanyId(String companyId, Pageable pageable) {
+        return eventRepository.findByEventCompanyId(companyId, pageable);
     }
-
 
     public Page<EventSummary> getAllEventSummary(String eventStatus, Pageable pageable) {
         return eventRepository.findByEventStatus(eventStatus, pageable);
@@ -236,8 +236,8 @@ public class EventService {
         return eventRepository.countByEventCompanyId(companyId);
     }
 
-    public Page<EventStatsDTO> getEventTicketStatisticsByCompanyId(String companyId,Pageable pageable) {
-        return eventRepository.getEventTicketStatisticsByCompanyId(companyId,pageable);
+    public Page<EventStatsDTO> getEventTicketStatisticsByCompanyId(String companyId, Pageable pageable) {
+        return eventRepository.getEventTicketStatisticsByCompanyId(companyId, pageable);
     }
 
 //    // Cập nhật sự kiện
@@ -308,7 +308,6 @@ public class EventService {
         return res;
     }
 
-
     public Double getTotalPriceWithStatus(int year, int month, String status) {
         return eventTicketRepository.getTotalPriceForMonthAndStatus(year, month, status);
     }
@@ -327,7 +326,6 @@ public class EventService {
 //
 //        return monthlyRevenue; // Trả về dữ liệu dạng {1=500.0, 2=800.0, ..., 12=300.0}
 //    }
-
     public List<Map<String, Object>> getMonthlyTotalRevenueByStatus(int year) {
         List<Object[]> results = eventTicketRepository.getMonthlyTotalPriceByStatus(year);
 
@@ -337,6 +335,7 @@ public class EventService {
                 "totalPrice", obj[2]
         )).collect(Collectors.toList());
     }
+
     public List<Map<String, Object>> getEventSummariesByCompanyId(String companyId) {
         List<Object[]> results = eventRepository.findEventIdAndTitleByCompanyId(companyId);
         List<Map<String, Object>> events = new ArrayList<>();
@@ -349,8 +348,6 @@ public class EventService {
         }
         return events;
     }
-
-
 
     public Page<?> searchEvents(
             String companyId,
@@ -383,7 +380,6 @@ public class EventService {
         return this.getAllEvents(pageable);
     }
 
-
     public EventTicketSummaryDTO getEventTicketSummaryByCompanyId(String companyId) {
         // Lấy số lượng event theo status
         List<Object[]> eventCountByStatusList = eventRepository.countEventsByCompanyIdAndStatus(companyId);
@@ -415,5 +411,34 @@ public class EventService {
         return summaryDTO;
     }
 
+    
+    
+    public EventTicket ratingEvent(Long ticketId, RatingRequest req) {
+        // Fetch the event by eventId from the request
+        Event event = this.getEventById(req.getEventId());
+
+        // Find the event ticket by ticketId
+        EventTicket ticket = eventTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        // Check if the user is the ticket owner and if the ticket has not been rated yet
+        if (ticket.getTicketUserId().equals(req.getUserId()) && !ticket.isTicketRating()) {
+            Integer star = req.getStar(); // The rating star value
+            Integer value = event.getEventRatingStart().get(star); // Current rating count for the star value
+
+            // Update the rating count
+            event.getEventRatingStart().replace(star, value + 1);
+
+            // Mark the ticket as rated
+            ticket.setTicketRating(true);
+
+            // Save the updated event and ticket
+            eventRepository.save(event);
+            return eventTicketRepository.save(ticket);
+        } else {
+            // Throw an exception if the user is not the ticket owner or the ticket is already rated
+            throw new RuntimeException("Either the user is not the ticket owner or the ticket has already been rated.");
+        }
+    }
 
 }
