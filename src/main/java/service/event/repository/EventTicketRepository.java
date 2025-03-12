@@ -97,4 +97,8 @@ public interface EventTicketRepository extends JpaRepository<EventTicket, Long> 
             "JOIN et.event e WHERE e.eventCompanyId = :companyId GROUP BY et.ticketStatus")
     List<Object[]> calculateTotalTicketPriceByStatusAndCompanyId(String companyId);
 
+    List<EventTicket> findByTicketStatusAndTicketDayActiveBefore(String status, Date now);
+    List<EventTicket> findByTicketExpiredTimeBefore(Date now);
+    
+    
 }

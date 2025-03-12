@@ -4,6 +4,7 @@
  */
 package service.event.repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +24,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByEvent_EventId(Long eventId);
 
     Page<Submission> findAll(Pageable pageable);
+
+    List<Submission> findBySubStatusAndSubDeadlineBefore(String status, Date deadline);
 }
