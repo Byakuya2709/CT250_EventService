@@ -30,7 +30,11 @@ public class ScheduledTask {
 
     
 //    @Scheduled(cron = "0 */2 * * * ?") // Chạy mỗi 2 phút
-    @Scheduled(cron = "0 0 1 * * ?") // Chạy lúc 01:00 AM hàng ngày
+//@Scheduled(cron = "0 0 1 ? * MON")  1tuan 1 lan
+//@Scheduled(cron = "0 0 1 1 * ?") 1 thang 1 lan luc 1AM
+
+
+@Scheduled(cron = "0 0 1 * * ?") // Chạy lúc 01:00 AM hàng ngày
     @Transactional
     public void updateStatuses() {
         LocalDate today = LocalDate.now();

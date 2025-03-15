@@ -36,6 +36,7 @@ public class TicketResponse {
     private String eventTitle;
     private Date ticketExpiredTime;
     private boolean isRating;
+    private String userMail;
     
     private byte[] qrCode;
 
@@ -56,6 +57,23 @@ public class TicketResponse {
         this.qrCode = ticket.getQrCode();
         this.ticketExpiredTime = ticket.getTicketExpiredTime();
         this.isRating = ticket.isTicketRating();
+        this.userMail = ticket.getTicketUserEmail();
+    }
+
+    public String getUserMail() {
+        return userMail;
+    }
+
+    public void setUserMail(String userMail) {
+        this.userMail = userMail;
+    }
+
+    public boolean isRating() {
+        return isRating;
+    }
+
+    public void setRating(boolean rating) {
+        isRating = rating;
     }
 
     public Date getTicketExpiredTime() {

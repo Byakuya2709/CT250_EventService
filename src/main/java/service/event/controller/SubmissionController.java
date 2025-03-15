@@ -32,7 +32,6 @@ public class SubmissionController {
     SubmissionService submissionService;
 
     @PostMapping("/{eventId}")
-
     public ResponseEntity<?> createSubmission(
             @PathVariable("eventId") long eventId,
             @RequestBody SubmissionDTO submissionDTO) {
@@ -75,6 +74,26 @@ public class SubmissionController {
             }
             Pageable pageable = PageRequest.of(page, size);
             Page<Submission> res = submissionService.getAllSubmissionsWithPageAble(pageable);
+            Page<SubmissionResponse> responsePage = res.map(SubmissionResponse::new);
+
+            return ResponseHandler.resBuilder("Danh sách đơn xét duyệt", HttpStatus.OK,responsePage);
+        } catch (Exception e) {
+            // Trả về phản hồi lỗi chung
+            return ResponseHandler.resBuilder("Lỗi: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+
+    }
+    @GetMapping("/company/{companyId}")
+    public ResponseEntity<?> getAllSubmissionsByCompany(@RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "10") int size,
+                                               @PathVariable String companyId) {
+
+        try {
+            if (size > 100) {
+                size = 100; // Cap size at 100 to prevent large queries
+            }
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Submission> res = submissionService.getAllSubmissionsByComapanyWithPageAble(companyId,pageable);
             Page<SubmissionResponse> responsePage = res.map(SubmissionResponse::new);
 
             return ResponseHandler.resBuilder("Danh sách đơn xét duyệt", HttpStatus.OK,responsePage);

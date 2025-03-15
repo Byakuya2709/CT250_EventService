@@ -24,6 +24,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     Optional<Submission> findByEvent_EventId(Long eventId);
 
     Page<Submission> findAll(Pageable pageable);
-
+    Page<Submission> findBySubCompanyId(String subCompanyId, Pageable pageable);
     List<Submission> findBySubStatusAndSubDeadlineBefore(String status, Date deadline);
 }

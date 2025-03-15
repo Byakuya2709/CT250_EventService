@@ -94,6 +94,9 @@ public class SubmissionService {
     public Page<Submission> getAllSubmissionsWithPageAble(Pageable pageable) {
         return submissionRepository.findAll(pageable);
     }
+    public Page<Submission> getAllSubmissionsByComapanyWithPageAble(String companyId,Pageable pageable) {
+        return submissionRepository.findBySubCompanyId(companyId,pageable);
+    }
 
     public Submission getSubmissionById(Long id) {
         return submissionRepository.findById(id)
