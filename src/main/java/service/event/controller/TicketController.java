@@ -64,17 +64,26 @@ public class TicketController {
         }
     }
 
-    @PatchMapping("/{ticketId}")
-    public ResponseEntity<?>  requestCancelledTicket(@PathVariable Long ticketId,@RequestBody RatingRequest req){
+    @PatchMapping("/rating/{ticketId}")
+    public ResponseEntity<?>  ratingTicket(@PathVariable Long ticketId,@RequestBody RatingRequest req){
         try {
             EventTicket  res = eventService.ratingEvent(ticketId, req);
-            return ResponseHandler.resBuilder("Đánh giá sự kiện thành công", HttpStatus.OK, res);
+            return ResponseHandler.resBuilder("Đánh giá sự kiện thành công", HttpStatus.OK,new TicketResponse(res) );
+        } catch (Exception e) {
+            return ResponseHandler.resBuilder("Lỗi:"+ e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
+        }
+    }
+    @PatchMapping("/feedback/{ticketId}")
+    public ResponseEntity<?>  dimissrRatingEvent(@PathVariable Long ticketId,@RequestBody RatingRequest req){
+        try {
+            EventTicket  res = eventService.dismissRatingEvent(ticketId, req);
+            return ResponseHandler.resBuilder("Hủy đánh giá sự kiện thành công", HttpStatus.OK, res);
         } catch (Exception e) {
             return ResponseHandler.resBuilder("Lỗi:"+ e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, null);
         }
     }
     
-    @PatchMapping("/rating/{ticketId}")
+    @PatchMapping("/{ticketId}")
     public ResponseEntity<?> ratingEvent(@PathVariable Long ticketId){
         try {
             TicketResponse  res = eventTicketService.requestCancelledTicket(ticketId);

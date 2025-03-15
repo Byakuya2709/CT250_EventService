@@ -25,6 +25,8 @@ import service.event.model.VNPayTransaction;
 @Repository
 public interface EventTicketRepository extends JpaRepository<EventTicket, Long> {
 
+     void deleteAllByEventId(Long eventId);
+    
     List<EventTicket> findByEvent(Event event);
 
     Page<EventTicket> findByTicketUserId(String ticketUserId,Pageable pageable); // Lấy danh sách vé theo user

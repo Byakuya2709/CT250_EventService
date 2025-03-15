@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -36,6 +37,7 @@ import service.event.utils.TextUtils;
 
 import javax.transaction.Transactional;
 import service.event.model.EventTicket;
+import service.event.repository.SubmissionRepository;
 import service.event.request.RatingRequest;
 
 /**
@@ -55,6 +57,31 @@ public class EventService {
     EventTicketRepository eventTicketRepository;
 //    @Autowired
 //    EventTicketCapacityRepository eventTicketCapacityRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Transactional
+    public boolean deleteEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found with ID: " + eventId));
+
+        // Xóa contract (Submission)
+        if (event.getContract() != null) {
+            submissionRepository.delete(event.getContract());
+        }
+
+        // Xóa ticket zones
+        if (!event.getTicketZones().isEmpty()) {
+            eventTicketZoneRepository.deleteAll(event.getTicketZones());
+        }
+
+        // Xóa vé sự kiện
+        eventTicketRepository.deleteAllByEventId(eventId);
+        // Xóa event
+        eventRepository.delete(event);
+        return true;
+    }
 
     public Page<Event> searchEvents(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -256,15 +283,7 @@ public class EventService {
 //        }
 //    }
     // Xóa sự kiện
-    public boolean deleteEvent(Long eventID) {
-        Optional<Event> event = eventRepository.findById(eventID);
-        if (event.isPresent()) {
-            eventRepository.delete(event.get());
-            return true;
-        } else {
-            return false; // Trả về false nếu không tìm thấy sự kiện
-        }
-    }
+
 
     public List<EventProjection> getEventsInCurrentMonth() {
         return eventRepository.findEventsInCurrentMonth();
@@ -411,8 +430,6 @@ public class EventService {
         return summaryDTO;
     }
 
-    
-    
     public EventTicket ratingEvent(Long ticketId, RatingRequest req) {
         // Fetch the event by eventId from the request
         Event event = this.getEventById(req.getEventId());
@@ -424,10 +441,13 @@ public class EventService {
         // Check if the user is the ticket owner and if the ticket has not been rated yet
         if (ticket.getTicketUserId().equals(req.getUserId()) && !ticket.isTicketRating()) {
             Integer star = req.getStar(); // The rating star value
-            Integer value = event.getEventRatingStart().get(star); // Current rating count for the star value
+            Map<Integer, Integer> ratingMap = event.getEventRatingStart();
+
+            // Ensure the rating map contains the star key
+            ratingMap.putIfAbsent(star, 0);
 
             // Update the rating count
-            event.getEventRatingStart().replace(star, value + 1);
+            ratingMap.put(star, ratingMap.get(star) + 1);
 
             // Mark the ticket as rated
             ticket.setTicketRating(true);
@@ -436,8 +456,37 @@ public class EventService {
             eventRepository.save(event);
             return eventTicketRepository.save(ticket);
         } else {
-            // Throw an exception if the user is not the ticket owner or the ticket is already rated
             throw new RuntimeException("Either the user is not the ticket owner or the ticket has already been rated.");
+        }
+    }
+
+    public EventTicket dismissRatingEvent(Long ticketId, RatingRequest req) {
+        // Fetch the event by eventId from the request
+        Event event = this.getEventById(req.getEventId());
+
+        // Find the event ticket by ticketId
+        EventTicket ticket = eventTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        // Check if the user is the ticket owner and if the ticket has been rated
+        if (ticket.getTicketUserId().equals(req.getUserId()) && ticket.isTicketRating()) {
+            Integer star = req.getStar(); // The rating star value
+            Map<Integer, Integer> ratingMap = event.getEventRatingStart();
+
+            // Ensure the rating map contains the star key
+            if (ratingMap.containsKey(star) && ratingMap.get(star) > 0) {
+                // Update the rating count
+                ratingMap.put(star, ratingMap.get(star) - 1);
+            }
+
+            // Mark the ticket as not rated
+            ticket.setTicketRating(false);
+
+            // Save the updated event and ticket
+            eventRepository.save(event);
+            return eventTicketRepository.save(ticket);
+        } else {
+            throw new RuntimeException("Either the user is not the ticket owner or the ticket has not been rated yet.");
         }
     }
 

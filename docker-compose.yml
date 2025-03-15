@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  mysql-db:
+    image: mysql:8
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: eventbox
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql  
+
+  event-service:
+    build: .
+    container_name: event-service
+    restart: always
+    depends_on:
+      - mysql-db
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/eventbox
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: "root"
+
+volumes:
+  mysql-data:  # Đảm bảo volume trùng với MySQL
