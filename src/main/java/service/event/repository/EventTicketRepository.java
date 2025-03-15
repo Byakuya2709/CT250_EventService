@@ -25,7 +25,7 @@ import service.event.model.VNPayTransaction;
 @Repository
 public interface EventTicketRepository extends JpaRepository<EventTicket, Long> {
 
-     void deleteAllByEventId(Long eventId);
+     void deleteAllByEvent(Event event);
     
     List<EventTicket> findByEvent(Event event);
 

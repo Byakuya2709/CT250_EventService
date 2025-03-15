@@ -66,22 +66,24 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found with ID: " + eventId));
 
-        // Xóa contract (Submission)
+        // Xóa hợp đồng (Submission) nếu có
         if (event.getContract() != null) {
             submissionRepository.delete(event.getContract());
+            event.setContract(null);
         }
 
-        // Xóa ticket zones
-        if (!event.getTicketZones().isEmpty()) {
-            eventTicketZoneRepository.deleteAll(event.getTicketZones());
-        }
 
-        // Xóa vé sự kiện
-        eventTicketRepository.deleteAllByEventId(eventId);
+        // Xóa tất cả vé sự kiện trước
+        eventTicketRepository.deleteAllByEvent(event);
+
+
+        event.getTicketZones().clear();
+
         // Xóa event
         eventRepository.delete(event);
         return true;
     }
+
 
     public Page<Event> searchEvents(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
