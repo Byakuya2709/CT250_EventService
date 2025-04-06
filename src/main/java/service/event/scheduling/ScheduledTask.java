@@ -34,7 +34,8 @@ public class ScheduledTask {
 //@Scheduled(cron = "0 0 1 1 * ?") 1 thang 1 lan luc 1AM
 
 
-@Scheduled(cron = "0 0 1 * * ?") // Chạy lúc 01:00 AM hàng ngày
+    @Scheduled(cron = "0 0 1 * * ?") // Chạy lúc 01:00 AM hàng ngày
+//    @Scheduled(cron = "0 */2 * * * ?") // Chạy mỗi 2 phút
     @Transactional
     public void updateStatuses() {
         LocalDate today = LocalDate.now();
@@ -83,7 +84,7 @@ public class ScheduledTask {
 
     private int updateCompletedEvents(Date todayDate) {
 //        Kiểm tra các sự kiện có trạng thái "UP_COMMING" (sắp diễn ra) nhưng đã qua ngày kết thúc → COMPLETED.
-        List<Event> completedEvents = eventRepository.findByEventStatusAndEventEndDateBefore("UP_COMING", todayDate);
+        List<Event> completedEvents = eventRepository.findByEventStatusAndEventEndDateBefore("UP_COMMING", todayDate);
         if (completedEvents.isEmpty()) {
             return 0;
         }

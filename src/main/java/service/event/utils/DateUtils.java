@@ -6,6 +6,9 @@ package service.event.utils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 /**
@@ -28,6 +31,17 @@ public static Date convertStringToDate(String dateStr) {
     }
     // If no format matched, return null or throw an exception as needed
     return null;
+}
+
+public static long calculateDaysBetween(Date startDate, Date endDate) {
+    if (startDate == null || endDate == null) {
+        throw new IllegalArgumentException("Date cannot be null");
+    }
+
+    LocalDate startLocalDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    LocalDate endLocalDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+    return ChronoUnit.DAYS.between(startLocalDate, endLocalDate);
 }
 
 }

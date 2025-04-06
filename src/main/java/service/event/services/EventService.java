@@ -131,7 +131,7 @@ public class EventService {
         // Tính số ngày sự kiện diễn ra
         Date startDate = DateUtils.convertStringToDate(eventDTO.getEventStartDate());
         Date endDate = DateUtils.convertStringToDate(eventDTO.getEventEndDate());
-        long daysBetween = ChronoUnit.DAYS.between(startDate.toInstant(), endDate.toInstant());
+        long daysBetween = DateUtils.calculateDaysBetween(startDate, endDate);
 
         if (daysBetween < 1) {
             daysBetween = 1;

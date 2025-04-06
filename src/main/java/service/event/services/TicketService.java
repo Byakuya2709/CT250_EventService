@@ -258,6 +258,9 @@ public class TicketService {
         
         int totalDays = event.getTotalDays(); // Tổng số ngày của sự kiện
 
+        if (totalDays<=0){
+            totalDays=1;
+        }
         // Lọc danh sách zone đúng với zone khách chọn (VIP, STANDARD, ECONOMY)
         List<EventTicketZone> selectedZones = allZones.stream()
                 .filter(zone -> zone.getZoneName().equals(request.getTicketZone()))
